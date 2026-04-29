@@ -7,24 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import dynamic from "next/dynamic";
-
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.MapContainer),
-  { ssr: false }
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((mod) => mod.TileLayer),
-  { ssr: false }
-);
-const Marker = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Marker),
-  { ssr: false }
-);
-const Popup = dynamic(
-  () => import("react-leaflet").then((mod) => mod.Popup),
-  { ssr: false }
-);
 
 const CONTACT_INFO = [
   { icon: MapPin, label: "Visit Us", value: "Londonderry, NH", sub: "Southern New Hampshire" },
@@ -223,20 +205,15 @@ export default function Contact() {
               transition={{ delay: 0.4 }}
               className="rounded-2xl overflow-hidden h-[500px] border border-border"
             >
-              <MapContainer
-                center={[42.8651, -71.3738]}
-                zoom={13}
-                style={{ height: "100%", width: "100%" }}
-                scrollWheelZoom={false}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <Marker position={[42.8651, -71.3738]}>
-                  <Popup>SNH Golf Carts LLC<br />Londonderry, NH</Popup>
-                </Marker>
-              </MapContainer>
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d2921.433744715386!2d-71.407091!3d42.926982!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89e24d005fae9693%3A0x3acb317d61226cca!2sSNH%20Golf%20Carts%20LLC!5e0!3m2!1sen!2sus!4v1777472561810!5m2!1sen!2sus"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              ></iframe>
             </motion.div>
           </div>
         </div>

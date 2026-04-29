@@ -16,7 +16,8 @@ export default function FeaturedProducts() {
       .then((r) => r.json())
       .then((res) => {
         const all = res._items || [];
-        setCarts(all.slice(0, 3));
+        const inStock = all.filter(item => item.stock?.inventoryStatus !== "OUT_OF_STOCK");
+        setCarts(inStock.slice(0, 3));
       })
       .catch((err) => console.error("Error fetching products:", err))
       .finally(() => setLoading(false));

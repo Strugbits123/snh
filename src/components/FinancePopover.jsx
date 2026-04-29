@@ -35,13 +35,14 @@ export default function FinancePopover({ textColor }) {
         aria-expanded={open}
         aria-haspopup="true"
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-colors
+        className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-colors whitespace-nowrap shrink-0
           ${open
             ? "bg-accent text-white border-accent"
             : "border-current hover:bg-accent hover:text-white hover:border-accent"
           } ${!open ? textColor : ""}`}
       >
-        💰 Finance
+        <span className="shrink-0">💰</span>
+        <span>Finance</span>
       </button>
 
       {open && (

@@ -21,10 +21,18 @@ export default function Shop() {
       .then((res) => {
         const rawItems = res?._items || res?.items || [];
         const processed = rawItems.map(item => extractProductDetails(item));
-        setProducts(processed);
+        
+        // Sort inStock first
+        const sorted = processed.sort((a, b) => {
+          if (a.inStock && !b.inStock) return -1;
+          if (!a.inStock && b.inStock) return 1;
+          return 0;
+        });
+
+        setProducts(sorted);
         
         const uniqueBrands = Array.from(
-          new Set(processed.map((p) => p.brand).filter(Boolean))
+          new Set(sorted.map((p) => p.brand).filter(Boolean))
         );
         setBrands(uniqueBrands);
       })
@@ -35,7 +43,8 @@ export default function Shop() {
   const filtered = products.filter((p) => {
     // Seat filter
     let seatMatch = true;
-    if (seatFilter === "4 Seats") seatMatch = p.seats === 4;
+    if (seatFilter === "2 Seats") seatMatch = p.seats === 2;
+    else if (seatFilter === "4 Seats") seatMatch = p.seats === 4;
     else if (seatFilter === "6 Seats") seatMatch = p.seats === 6;
     else if (seatFilter === "8 Seats") seatMatch = p.seats >= 8;
 

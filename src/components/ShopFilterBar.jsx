@@ -1,4 +1,4 @@
-const SEAT_OPTIONS = ["All", "4 Seats", "6 Seats", "8 Seats"];
+const SEAT_OPTIONS = ["All", "2 Seats", "4 Seats", "6 Seats", "8 Seats"];
 const COLOR_OPTIONS = ["All", "Black", "White", "Red", "Grey", "Matte Grey", "Matte Black"];
 
 function FilterGroup({ label, options, value, onChange, divider }) {

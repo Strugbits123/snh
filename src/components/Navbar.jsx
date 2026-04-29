@@ -41,17 +41,17 @@ export default function Navbar() {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${navBg}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          <Link href="/" className="flex items-center gap-2">
-            <div className={`font-display font-bold text-xl tracking-tight ${textColor}`}>
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <div className={`font-display font-bold text-xl tracking-tight whitespace-nowrap ${textColor}`}>
               SNH <span className="text-accent">GOLF CARTS</span>
             </div>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-0.5 xl:gap-1">
             {NAV_LINKS.map((link) => (
               <Link key={link.path}
                 href={link.path}
-                className={`px-4 py-2 text-sm font-medium tracking-wide uppercase transition-colors rounded-lg
+                className={`px-2 xl:px-4 py-2 text-[12px] xl:text-sm font-medium tracking-wide uppercase transition-colors rounded-lg whitespace-nowrap
                   ${pathname === link.path || (link.path !== "/" && pathname.startsWith(link.path))
                     ? "text-accent"
                     : `${textColor} hover:text-accent`
@@ -62,22 +62,24 @@ export default function Navbar() {
             ))}
           </div>
 
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0">
             <a
               href="tel:+16035551234"
-              className={`flex items-center gap-2 text-sm font-medium ${textColor} hover:text-accent transition-colors whitespace-nowrap`}
+              className={`hidden xl:flex items-center gap-2 text-sm font-medium ${textColor} hover:text-accent transition-colors whitespace-nowrap`}
             >
               <Phone className="w-4 h-4" />
               (603) 555-1234
             </a>
-            <Link href="/shop">
-              <Button className="bg-accent hover:bg-accent/90 text-white rounded-full px-6">
+            <Link href="/shop" className="shrink-0">
+              <Button className="bg-accent hover:bg-accent/90 text-white rounded-full px-4 xl:px-6 h-10 text-sm">
                 <ShoppingCart className="w-4 h-4 mr-2" />
-                Shop Now
+                <span className="whitespace-nowrap">Shop Now</span>
               </Button>
             </Link>
             {pathname === "/shop" && (
-              <FinancePopover textColor={textColor} />
+              <div className="shrink-0">
+                <FinancePopover textColor={textColor} />
+              </div>
             )}
           </div>
 
