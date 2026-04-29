@@ -4,13 +4,13 @@ const FINANCING = {
   "Sheffield Financial": {
     color: "bg-blue-50 border-blue-200 text-blue-800",
     iconColor: "text-blue-600",
-    url: "https://www.sheffieldfinancial.com/",
-    label: "Finance with Sheffield Financial",
+    url: "https://prequalify.sheffieldFinancial.com/Apply/Dealer/59453",
+    label: "Finance through Sheffield Financial",
   },
   "Dealer Direct": {
     color: "bg-green-50 border-green-200 text-green-800",
     iconColor: "text-green-600",
-    url: null,
+    url: "https://dealerdirect.apptraker.com/my/guest?dealer=11116",
     label: "Finance through Dealer Direct",
   },
 };

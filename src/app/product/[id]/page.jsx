@@ -24,6 +24,7 @@ import {
 import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
 import { extractProductDetails, cn } from "@/lib/utils";
+import FinancingBadge from "@/components/FinancingBadge";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -196,13 +197,18 @@ export default function ProductDetail() {
             </div>
 
             {/* Financing Badge */}
-            <div className="flex items-center gap-3 rounded-xl border px-4 py-3 mb-4 bg-green-50 border-green-200 text-green-800">
-              <DollarSign className="w-5 h-5 shrink-0 text-green-600" />
-              <div className="flex-1">
-                <p className="text-xs font-semibold uppercase tracking-wider opacity-70">Financing Available</p>
-                <p className="font-semibold text-sm">Finance through Dealer Direct</p>
-              </div>
-            </div>
+            {(() => {
+              let partner = "Sheffield Financial"; // Default
+              const brandLower = cart.brand?.toLowerCase() || "";
+              
+              if (brandLower.includes("dach") || brandLower.includes("conquest")) {
+                partner = "Dealer Direct";
+              } else if (brandLower.includes("evolution") || brandLower.includes("teko") || brandLower.includes("tomberlin")) {
+                partner = "Sheffield Financial";
+              }
+              
+              return <FinancingBadge partner={partner} />;
+            })()}
 
             {/* Specs Grid */}
             {specs.length > 0 && (
