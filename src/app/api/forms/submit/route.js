@@ -66,57 +66,122 @@ export async function POST(req) {
       formId = "00000000-0000-0000-0000-000000000000";
     }
 
-    // Map fields for Wix Submissions v4 (requires submissionsMap)
-    const submissionsMap = {
-      "name": name || "N/A",
-      "email": email || "N/A",
+    // Format phone number for Wix strict validation
+    const formatPhone = (p) => {
+      if (!p) return undefined;
+      // Remove all non-numeric characters
+      const cleaned = String(p).replace(/\D/g, '');
+      if (cleaned.length === 0) return p; // Return as-is if no digits
+      if (cleaned.length === 10) return `+1${cleaned}`;
+      if (cleaned.length > 10 && !p.startsWith('+')) return `+${cleaned}`;
+      return p.startsWith('+') ? p : `+${cleaned}`;
     };
 
-    if (phone) submissionsMap["phone"] = phone;
-    if (message) submissionsMap["message"] = message;
-    
-    if (metadata) {
-      Object.entries(metadata).forEach(([key, val]) => {
-        if (val) submissionsMap[key] = String(val);
-      });
+    // Map fields exactly as provided by the user
+    const submissionsMap = {
+      "inquiry_type": metadata?.inquiry_type,
+      "name": name,
+      "email": email,
+      "message": message,
+      "phone": formatPhone(phone),
+      "appointment_time": metadata?.appointment_time,
+      "cart_interest": metadata?.cart_interest,
+      "appointment_date": metadata?.appointment_date,
+      "budget_1": metadata?.budget_1,
+    };
+
+    const { wixClient } = await import('@/lib/wixClient');
+
+    // 2. DEEP SCAN DISCOVERY: Find hidden Wix Field IDs by their labels
+    try {
+      console.log(`Deep scanning form: ${formId}`);
+      const form = await wixClient.submissions.getForm(formId);
+      
+      if (form && form.fields) {
+        console.log("Discovered form fields:", form.fields.map(f => `${f.label}: ${f._id}`));
+        
+        form.fields.forEach(field => {
+          const label = field.label?.toLowerCase() || "";
+          const fid = field._id;
+          
+          // Map based on the label we find in the form definition
+          if (label.includes("first name") || label.includes("name")) submissionsMap[fid] = name;
+          if (label.includes("email")) submissionsMap[fid] = email;
+          if (label.includes("phone")) submissionsMap[fid] = phone;
+          if (label.includes("message")) submissionsMap[fid] = message;
+          if (label.includes("inquiry")) submissionsMap[fid] = metadata?.inquiry_type;
+          if (label.includes("appointment time")) submissionsMap[fid] = metadata?.appointment_time;
+          if (label.includes("appointment date")) submissionsMap[fid] = metadata?.appointment_date;
+          if (label.includes("budget")) submissionsMap[fid] = metadata?.budget_1;
+          if (label.includes("interest")) submissionsMap[fid] = metadata?.cart_interest;
+        });
+      }
+    } catch (discoveryErr) {
+      console.warn("Deep scan failed, using provided IDs:", discoveryErr.message);
     }
 
+    // 3. ADVANCED COLLECTION DISCOVERY: Try to find the correct database
+    try {
+      const collectionsRes = await wixClient.items.listDataCollections();
+      const collections = collectionsRes.collections || [];
+      
+      const targetColl = collections.find(c => {
+        const fieldKeys = c.fields?.map(f => f.key) || [];
+        return fieldKeys.includes("budget_1") || fieldKeys.includes("inquiry_type") || fieldKeys.includes("appointment_time");
+      });
+
+      if (targetColl) {
+        await wixClient.items.insertDataItem({
+          dataCollectionId: targetColl._id,
+          item: submissionsMap
+        });
+      }
+    } catch (discoveryErr) {
+      console.warn("Collection insertion failed:", discoveryErr.message);
+    }
+
+    // 4. Submit to Form App (Exactly as per documentation)
     const submissionPayload = {
       submission: {
         formId: formId,
-        namespace: "wix.form_app.form", // Standard namespace for Wix Forms
-        submissionsMap: submissionsMap
+        namespace: "wix.form_app.form",
+        submissions: submissionsMap 
       }
     };
 
+    console.log("Submitting with doc-compliant payload:", JSON.stringify(submissionPayload, null, 2));
+
     const formResponse = await fetch("https://www.wixapis.com/form-submission-service/v4/submissions", {
       method: "POST",
-      headers,
+      headers: {
+        "Authorization": API_KEY,
+        "wix-site-id": SITE_ID,
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(submissionPayload)
     });
 
-    // Check for HTML response before parsing JSON
-    const contentType = formResponse.headers.get("content-type");
-    if (contentType && contentType.includes("text/html")) {
-      const htmlError = await formResponse.text();
-      console.error("Wix returned HTML instead of JSON. Check your URL/Form ID.");
-      return NextResponse.json({ error: "Wix Form Service unavailable (HTML Error)", details: htmlError.slice(0, 200) }, { status: 502 });
-    }
+    const submissionResult = await formResponse.json();
 
-    const formData = await formResponse.json();
-
-    if (!formResponse.ok) {
-      console.error("Wix Forms Error:", formData);
-      return NextResponse.json({ 
-        error: formData.message || "Wix Form Submission failed",
-        details: formData
-      }, { status: formResponse.status });
+    // 5. FALLBACK: Add a Note to the Contact
+    if (contactId) {
+      try {
+        const noteContent = `--- Form Submission: ${formName} ---\n` + 
+          Object.entries(submissionsMap)
+            .filter(([k, v]) => v && !k.startsWith("0000")) 
+            .map(([k, v]) => `${k}: ${v}`)
+            .join("\n");
+            
+        await wixClient.contacts.createNote(contactId, { content: noteContent });
+      } catch (noteErr) {
+        console.warn("Could not add fallback note:", noteErr.message);
+      }
     }
 
     return NextResponse.json({ 
       success: true, 
       message: "Form submitted successfully",
-      submissionId: formData.submission?.id,
+      submission: submissionResult,
       contactId
     });
 

@@ -151,10 +151,10 @@ export default function LeadForm() {
           formName: appointmentType === "cart" ? "Sales Appointment" : "Service Request",
           message: message,
           metadata: {
-            budget: form.budget,
-            cartInterest: form.cartInterest,
-            appointmentTime: selectedTime,
-            appointmentDate: dateStr
+            budget_1: form.budget,
+            cart_interest: form.cartInterest,
+            appointment_time: selectedTime,
+            appointment_date: dateStr
           }
         })
       });

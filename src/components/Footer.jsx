@@ -7,8 +7,8 @@ const FOOTER_LINKS = [
     title: "Shop",
     links: [
       { label: "All Golf Carts", path: "/shop" },
-      { label: "New Carts", path: "/shop?category=New" },
-      { label: "Street Legal LSVs", path: "/shop?street_legal=true" },
+      { label: "DACH", path: "/shop?make=DACH" },
+      { label: "TEKO", path: "/shop?make=TEKO" },
       { label: "Rentals", path: "/rentals" },
     ],
   },
