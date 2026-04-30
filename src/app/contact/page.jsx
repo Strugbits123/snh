@@ -19,9 +19,33 @@ export default function Contact() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", inquiry_type: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    const e = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneDigits = form.phone.replace(/\D/g, "");
+
+    if (!form.name.trim()) e.name = "Full name is required";
+    if (!form.email.trim()) e.email = "Email is required";
+    else if (!emailRegex.test(form.email)) e.email = "Please enter a valid email address";
+    
+    if (form.phone.trim() && phoneDigits.length < 10) {
+      e.phone = "Please enter a valid 10-digit phone number";
+    }
+
+    if (!form.inquiry_type) e.inquiry_type = "Please select an inquiry type";
+    if (!form.message.trim()) e.message = "Message is required";
+    else if (form.message.trim().length < 10) e.message = "Message must be at least 10 characters";
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
+    
     setSubmitting(true);
     
     try {
@@ -43,6 +67,7 @@ export default function Contact() {
       const resData = await response.json();
       if (resData.success) {
         setSubmitted(true);
+        setErrors({});
       } else {
         alert("Something went wrong. Please try again.");
       }
@@ -124,29 +149,29 @@ export default function Contact() {
                   </Button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                   <h2 className="font-display font-bold text-2xl mb-6">Send Us a Message</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Full Name *</Label>
                       <Input
-                        required
                         placeholder="John Doe"
                         value={form.name}
-                        onChange={(e) => updateField("name", e.target.value)}
-                        className="rounded-xl h-12"
+                        onChange={(e) => { updateField("name", e.target.value); if(errors.name) setErrors({...errors, name:null}); }}
+                        className={`rounded-xl h-12 ${errors.name ? "border-red-500 focus:ring-red-200" : ""}`}
                       />
+                      {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                     </div>
                     <div className="space-y-2">
                       <Label>Email *</Label>
                       <Input
-                        required
                         type="email"
                         placeholder="john@example.com"
                         value={form.email}
-                        onChange={(e) => updateField("email", e.target.value)}
-                        className="rounded-xl h-12"
+                        onChange={(e) => { updateField("email", e.target.value); if(errors.email) setErrors({...errors, email:null}); }}
+                        className={`rounded-xl h-12 ${errors.email ? "border-red-500 focus:ring-red-200" : ""}`}
                       />
+                      {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -155,14 +180,18 @@ export default function Contact() {
                       <Input
                         placeholder="603-777-7831"
                         value={form.phone}
-                        onChange={(e) => updateField("phone", e.target.value)}
-                        className="rounded-xl h-12"
+                        onChange={(e) => { updateField("phone", e.target.value); if(errors.phone) setErrors({...errors, phone:null}); }}
+                        className={`rounded-xl h-12 ${errors.phone ? "border-red-500 focus:ring-red-200" : ""}`}
                       />
+                      {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                     </div>
                     <div className="space-y-2">
-                      <Label>Inquiry Type</Label>
-                      <Select value={form.inquiry_type} onValueChange={(v) => updateField("inquiry_type", v)}>
-                        <SelectTrigger className="rounded-xl h-12">
+                      <Label>Inquiry Type *</Label>
+                      <Select 
+                        value={form.inquiry_type} 
+                        onValueChange={(v) => { updateField("inquiry_type", v); if(errors.inquiry_type) setErrors({...errors, inquiry_type:null}); }}
+                      >
+                        <SelectTrigger className={`rounded-xl h-12 ${errors.inquiry_type ? "border-red-500" : ""}`}>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -173,18 +202,19 @@ export default function Contact() {
                           <SelectItem value="General">General Question</SelectItem>
                         </SelectContent>
                       </Select>
+                      {errors.inquiry_type && <p className="text-red-500 text-xs mt-1">{errors.inquiry_type}</p>}
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Message *</Label>
                     <Textarea
-                      required
                       rows={5}
                       placeholder="Tell us how we can help..."
                       value={form.message}
-                      onChange={(e) => updateField("message", e.target.value)}
-                      className="rounded-xl resize-none"
+                      onChange={(e) => { updateField("message", e.target.value); if(errors.message) setErrors({...errors, message:null}); }}
+                      className={`rounded-xl resize-none ${errors.message ? "border-red-500 focus:ring-red-200" : ""}`}
                     />
+                    {errors.message && <p className="text-red-500 text-xs mt-1">{errors.message}</p>}
                   </div>
                   <Button
                     type="submit"

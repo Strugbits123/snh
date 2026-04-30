@@ -113,9 +113,30 @@ export default function LeadForm() {
 
   const validateStep1 = () => {
     const e = {};
-    if (!form.name.trim()) e.name = "Required";
-    if (!form.phone.trim()) e.phone = "Required";
-    if (!form.email.trim()) e.email = "Required";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneDigits = form.phone.replace(/\D/g, '');
+
+    if (!form.name.trim()) e.name = "Full name is required";
+    if (!form.phone.trim()) e.phone = "Phone number is required";
+    else if (phoneDigits.length < 10) e.phone = "Please enter a valid 10-digit phone number";
+    
+    if (!form.email.trim()) e.email = "Email is required";
+    else if (!emailRegex.test(form.email)) e.email = "Please enter a valid email address";
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const e = {};
+    if (appointmentType === "cart") {
+      if (!form.cartInterest.trim()) e.cartInterest = "Please describe your interest";
+      if (!form.budget) e.budget = "Please select a budget range";
+      if (!selectedDate) e.date = "Please select a date";
+      if (!selectedTime) e.time = "Please select a time";
+    } else {
+      if (!form.serviceDescription.trim()) e.serviceDescription = "Please describe the issue";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -123,14 +144,13 @@ export default function LeadForm() {
   const handleTypeSelect = (type) => {
     if (!validateStep1()) return;
     setAppointmentType(type);
+    setErrors({}); // Clear errors for next step
     setStep(2);
   };
 
   const handleSubmit = async () => {
-    if (appointmentType === "service" && !form.serviceDescription.trim()) {
-      setErrors({ serviceDescription: "Required" });
-      return;
-    }
+    if (!validateStep2()) return;
+    
     setSubmitting(true);
     const dateStr = selectedDate
       ? selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
@@ -273,37 +293,42 @@ export default function LeadForm() {
                     type="text"
                     placeholder="e.g. 4-seater, street legal, lifted..."
                     value={form.cartInterest}
-                    onChange={(e) => set("cartInterest", e.target.value)}
-                    className={inputCls(false)}
+                    onChange={(e) => { set("cartInterest", e.target.value); if(errors.cartInterest) setErrors({...errors, cartInterest:null}); }}
+                    className={inputCls(errors.cartInterest)}
                   />
+                  {errors.cartInterest && <p className="text-red-400 text-[10px] mt-1">{errors.cartInterest}</p>}
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-white/90 uppercase tracking-wider mb-1 font-sans">Budget</label>
                   <select
                     value={form.budget}
-                    onChange={(e) => set("budget", e.target.value)}
-                    className={inputCls(false) + " cursor-pointer"}
+                    onChange={(e) => { set("budget", e.target.value); if(errors.budget) setErrors({...errors, budget:null}); }}
+                    className={inputCls(errors.budget) + " cursor-pointer"}
                     style={{ background: "rgba(255,255,255,0.05)" }}
                   >
                     <option value="" style={{ background: "#0f1f18" }}>Select budget range</option>
                     {BUDGET_OPTIONS.map((o) => <option key={o} value={o} style={{ background: "#0f1f18" }}>{o}</option>)}
                   </select>
+                  {errors.budget && <p className="text-red-400 text-[10px] mt-1">{errors.budget}</p>}
                 </div>
               </div>
 
               <div className="mb-4">
                 <p className="text-[11px] font-semibold text-white/90 uppercase tracking-wider mb-2 font-sans">Pick a Date</p>
-                <MiniCalendar selected={selectedDate} onSelect={(d) => { setSelectedDate(d); setSelectedTime(null); }} />
+                <div className={errors.date ? "p-3 rounded-xl border border-red-400/30" : ""}>
+                  <MiniCalendar selected={selectedDate} onSelect={(d) => { setSelectedDate(d); setSelectedTime(null); if(errors.date) setErrors({...errors, date:null}); }} />
+                </div>
+                {errors.date && <p className="text-red-400 text-[10px] mt-1">{errors.date}</p>}
               </div>
 
               {selectedDate && (
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
                   <p className="text-[11px] font-semibold text-white/90 uppercase tracking-wider mb-2 font-sans">Available Times</p>
-                  <div className="grid grid-cols-4 gap-1.5">
+                  <div className={`grid grid-cols-4 gap-1.5 ${errors.time ? "p-2 rounded-xl border border-red-400/30" : ""}`}>
                     {TIMES.map((t) => (
                       <button
                         key={t}
-                        onClick={() => setSelectedTime(t)}
+                        onClick={() => { setSelectedTime(t); if(errors.time) setErrors({...errors, time:null}); }}
                         className={`text-[10px] font-semibold py-1.5 rounded-lg border transition-all font-sans
                           ${selectedTime === t
                             ? "bg-accent border-accent text-white shadow-lg shadow-accent/20"
@@ -314,6 +339,7 @@ export default function LeadForm() {
                       </button>
                     ))}
                   </div>
+                  {errors.time && <p className="text-red-400 text-[10px] mt-1">{errors.time}</p>}
                 </motion.div>
               )}
 
