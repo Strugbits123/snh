@@ -15,18 +15,19 @@ const FOOTER_LINKS = [
   {
     title: "Services",
     links: [
-      { label: "Repairs", path: "/services" },
-      { label: "Battery Replacement", path: "/services" },
-      { label: "Upgrades", path: "/services" },
-      { label: "Maintenance", path: "/services" },
+      { label: "Rentals", path: "/services#rentals" },
+      { label: "Repair & Maintenance", path: "/services#repair" },
+      { label: "Winterization", path: "/services#winterization" },
+      { label: "Custom Upgrades", path: "/services#upgrades" },
     ],
   },
   {
     title: "Company",
     links: [
       { label: "About Us", path: "/about" },
+      { label: "Services", path: "/services" },
+      { label: "Blog", path: "/blogs" },
       { label: "Contact", path: "/contact" },
-      { label: "Rentals", path: "/rentals" },
     ],
   },
 ];
@@ -41,8 +42,8 @@ export default function Footer() {
               SNH <span className="text-accent">GOLF CARTS</span>
             </div>
             <p className="text-white/60 text-sm leading-relaxed max-w-sm mb-6">
-              Premium electric golf carts and LSVs for every lifestyle. 
-              Veteran-owned and operated, serving Southern New Hampshire with 
+              Premium electric golf carts and LSVs for every lifestyle.
+              Veteran-owned and operated, serving Southern New Hampshire with
               integrity and excellence.
             </p>
             <div className="flex gap-3">
@@ -56,7 +57,7 @@ export default function Footer() {
                 href="#"
                 className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-accent transition-colors"
               >
-              <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -88,11 +89,11 @@ export default function Footer() {
                 <MapPin className="w-3.5 h-3.5" />
                 Londonderry, NH
               </span>
-              <a href="tel:+16035551234" className="flex items-center gap-2 hover:text-accent transition-colors">
+              <a href="tel:6037777831" className="flex items-center gap-2 hover:text-accent transition-colors">
                 <Phone className="w-3.5 h-3.5" />
-                (603) 555-1234
+                603-777-7831
               </a>
-              <a href="mailto:info@snhgolfcarts.com" className="flex items-center gap-2 hover:text-accent transition-colors">
+              <a href="mailto:info@snhgolfcarts.com" className="flex items-center gap-2 hover:text-accent transition-colors break-all">
                 <Mail className="w-3.5 h-3.5" />
                 info@snhgolfcarts.com
               </a>

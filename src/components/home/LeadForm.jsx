@@ -213,7 +213,7 @@ export default function LeadForm() {
               <div className="space-y-3 mb-5">
                 {[
                   { key: "name", label: "Full Name", type: "text", placeholder: "John Smith" },
-                  { key: "phone", label: "Phone Number", type: "tel", placeholder: "(603) 555-0100" },
+                  { key: "phone", label: "Phone Number", type: "tel", placeholder: "603-777-7831" },
                   { key: "email", label: "Email Address", type: "email", placeholder: "john@email.com" },
                 ].map(({ key, label, type, placeholder }) => (
                   <div key={key}>

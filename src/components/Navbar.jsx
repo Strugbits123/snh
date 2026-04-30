@@ -64,11 +64,11 @@ export default function Navbar() {
 
           <div className="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0">
             <a
-              href="tel:+16035551234"
+              href="tel:6037777831"
               className={`hidden xl:flex items-center gap-2 text-sm font-medium ${textColor} hover:text-accent transition-colors whitespace-nowrap`}
             >
               <Phone className="w-4 h-4" />
-              (603) 555-1234
+              603-777-7831
             </a>
             <Link href="/shop" className="shrink-0">
               <Button className="bg-accent hover:bg-accent/90 text-white rounded-full px-4 xl:px-6 h-10 text-sm">
@@ -115,11 +115,11 @@ export default function Navbar() {
               ))}
               <div className="pt-4 border-t border-border mt-4 space-y-3">
                 <a
-                  href="tel:+16035551234"
+                  href="tel:6037777831"
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground whitespace-nowrap"
                 >
                   <Phone className="w-4 h-4" />
-                  (603) 555-1234
+                  603-777-7831
                 </a>
                 {pathname === "/shop" && (
                   <div className="px-4 py-2">

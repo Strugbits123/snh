@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 
 const CONTACT_INFO = [
   { icon: MapPin, label: "Visit Us", value: "Londonderry, NH", sub: "Southern New Hampshire" },
-  { icon: Phone, label: "Call Us", value: "(603) 555-1234", href: "tel:+16035551234" },
+  { icon: Phone, label: "Call Us", value: "603-777-7831", href: "tel:6037777831" },
   { icon: Mail, label: "Email Us", value: "info@snhgolfcarts.com", href: "mailto:info@snhgolfcarts.com" },
   { icon: Clock, label: "Business Hours", value: "Mon-Sat: 9AM-6PM", sub: "Closed Sunday" },
 ];
@@ -74,7 +74,7 @@ export default function Contact() {
 
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-16">
             {CONTACT_INFO.map((info, i) => (
               <motion.div
                 key={info.label}
@@ -88,7 +88,7 @@ export default function Contact() {
                 </div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{info.label}</p>
                 {info.href ? (
-                  <a href={info.href} className="font-semibold text-sm hover:text-accent transition-colors">
+                  <a href={info.href} className="font-semibold text-sm hover:text-accent transition-colors break-all">
                     {info.value}
                   </a>
                 ) : (
@@ -153,7 +153,7 @@ export default function Contact() {
                     <div className="space-y-2">
                       <Label>Phone</Label>
                       <Input
-                        placeholder="(603) 555-0000"
+                        placeholder="603-777-7831"
                         value={form.phone}
                         onChange={(e) => updateField("phone", e.target.value)}
                         className="rounded-xl h-12"

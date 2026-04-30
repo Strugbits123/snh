@@ -127,7 +127,7 @@ export default function ProductDetail() {
           <ArrowLeft className="w-4 h-4" /> Back to Shop
         </Link>
 
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
           {/* Image Gallery */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -210,14 +210,13 @@ export default function ProductDetail() {
               return <FinancingBadge partner={partner} />;
             })()}
 
-            {/* Specs Grid */}
             {specs.length > 0 && (
-              <div className="grid grid-cols-2 gap-3 my-6">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 my-6">
                 {specs.map((spec) => (
-                  <div key={spec.label} className="bg-muted rounded-xl p-4">
-                    <spec.icon className="w-5 h-5 text-accent mb-2" />
-                    <p className="text-xs text-muted-foreground">{spec.label}</p>
-                    <p className="font-semibold text-sm">{spec.value}</p>
+                  <div key={spec.label} className="bg-muted rounded-xl p-3 sm:p-4">
+                    <spec.icon className="w-4 h-4 sm:w-5 sm:h-5 text-accent mb-2" />
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{spec.label}</p>
+                    <p className="font-semibold text-xs sm:text-sm">{spec.value}</p>
                   </div>
                 ))}
               </div>

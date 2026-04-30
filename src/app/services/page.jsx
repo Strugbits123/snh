@@ -33,6 +33,7 @@ export default function Services() {
     const defaultServices = [
       {
         id: "1",
+        slug: "rentals",
         name: "Rentals",
         icon: "Key",
         description:
@@ -50,6 +51,7 @@ export default function Services() {
       },
       {
         id: "2",
+        slug: "repair",
         name: "Repair & Maintenance",
         icon: "Wrench",
         description:
@@ -67,6 +69,7 @@ export default function Services() {
       },
       {
         id: "3",
+        slug: "winterization",
         name: "Winterization",
         icon: "Snowflake",
         description:
@@ -84,6 +87,7 @@ export default function Services() {
       },
       {
         id: "4",
+        slug: "upgrades",
         name: "Upgrades",
         icon: "Sparkles",
         description:
@@ -103,6 +107,32 @@ export default function Services() {
     setServices(defaultServices);
     setLoading(false);
   }, []);
+
+  // Handle scrolling to hash on load
+  useEffect(() => {
+    const handleScroll = () => {
+      const hash = window.location.hash;
+      if (hash) {
+        const id = hash.substring(1);
+        const el = document.getElementById(id);
+        if (el) {
+          // Double frame wait to ensure rendering is complete
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              el.scrollIntoView({ behavior: "smooth" });
+            });
+          });
+        }
+      }
+    };
+
+    if (!loading) {
+      handleScroll();
+      // Also listen for hash changes
+      window.addEventListener('hashchange', handleScroll);
+      return () => window.removeEventListener('hashchange', handleScroll);
+    }
+  }, [loading]);
 
   return (
     <div>
@@ -145,11 +175,12 @@ export default function Services() {
                 return (
                   <motion.div
                     key={service.id}
+                    id={service.slug}
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6 }}
-                    className={`grid lg:grid-cols-2 gap-16 items-center ${isReversed ? "lg:direction-rtl" : ""}`}
+                    className={`grid lg:grid-cols-2 gap-16 items-center scroll-mt-32 ${isReversed ? "lg:direction-rtl" : ""}`}
                   >
                     <div className={isReversed ? "lg:order-2" : ""}>
                       <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mb-6">
