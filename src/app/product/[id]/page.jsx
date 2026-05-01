@@ -33,6 +33,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [selectedOptions, setSelectedOptions] = useState({});
 
   useEffect(() => {
     setLoading(true);
@@ -44,6 +45,9 @@ export default function ProductDetail() {
         if (rawProduct) {
           const product = extractProductDetails(rawProduct);
           setCart(product);
+          if (product.colors?.length > 0) {
+            setSelectedOptions({ [product.colorOptionName]: product.colors[0] });
+          }
           
           const allRes = await wixProxy("products", "query");
           const allRaw = allRes._items || allRes.items || allRes.data?.products || [];
@@ -62,15 +66,17 @@ export default function ProductDetail() {
   const handleCardCheckout = async () => {
     setCheckoutLoading(true);
     try {
+      // console.log("Cart==>",cart)
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productId: cart.id,
           quantity: 1,
-          productName: cart.name,
+          productName: `${cart.brand?.toUpperCase() || ""} ${cart.name}`,
           productPrice: cart.price,
           productImage: cart.image,
+          options: selectedOptions,
         }),
       });
       const data = await res.json();
@@ -219,6 +225,28 @@ export default function ProductDetail() {
                     <p className="font-semibold text-xs sm:text-sm">{spec.value}</p>
                   </div>
                 ))}
+              </div>
+            )}
+            
+            {cart.colors?.length > 0 && (
+              <div className="mb-6">
+                <p className="text-xs font-semibold uppercase tracking-wider mb-3">Select Color</p>
+                <div className="flex flex-wrap gap-2">
+                  {cart.colors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedOptions({ [cart.colorOptionName]: color })}
+                      className={cn(
+                        "px-4 py-2 rounded-full border text-xs font-medium transition-all",
+                        selectedOptions[cart.colorOptionName] === color
+                          ? "bg-accent border-accent text-white shadow-md"
+                          : "bg-background border-border text-muted-foreground hover:border-accent/50"
+                      )}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 

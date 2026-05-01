@@ -15,8 +15,9 @@ export function extractProductDetails(product) {
 
   // Extract colors from productOptions
   const colors = [];
+  let colorOption = null;
   if (product.productOptions) {
-    const colorOption = product.productOptions.find(
+    colorOption = product.productOptions.find(
       (opt) => opt.optionType === "color" || opt.name?.toLowerCase() === "color"
     );
     if (colorOption && colorOption.choices) {
@@ -65,7 +66,8 @@ export function extractProductDetails(product) {
     inStock: product.stock?.inventoryStatus !== "OUT_OF_STOCK",
     slug: product.slug,
     id: product._id || product.id,
-    colors: colors
+    colors: colors,
+    colorOptionName: colorOption?.name || "Color"
   };
 
   const fullText = (

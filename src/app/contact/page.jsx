@@ -9,10 +9,10 @@ import { MapPin, Phone, Mail, Clock, Send, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 const CONTACT_INFO = [
-  { icon: MapPin, label: "Visit Us", value: "Londonderry, NH", sub: "Southern New Hampshire" },
+  { icon: MapPin, label: "Visit Us", value: "Londonderry, NH", sub: "Southern New Hampshire", href: "https://www.google.com/maps/search/?api=1&query=SNH+Golf+Carts+LLC+Londonderry+NH", target: "_blank" },
   { icon: Phone, label: "Call Us", value: "603-777-7831", href: "tel:6037777831" },
   { icon: Mail, label: "Email Us", value: "info@snhgolfcarts.com", href: "mailto:info@snhgolfcarts.com" },
-  { icon: Clock, label: "Business Hours", value: "Mon-Sat: 9AM-6PM", sub: "Closed Sunday" },
+  { icon: Clock, label: "Business Hours", value: ["Mon: 9AM - 5PM", "Tue: Closed", "Wed-Fri: 9AM - 5PM", "Sat: 10AM - 5PM", "Sun: 10AM - 3PM"] },
 ];
 
 export default function Contact() {
@@ -99,27 +99,73 @@ export default function Contact() {
 
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-16">
             {CONTACT_INFO.map((info, i) => (
               <motion.div
                 key={info.label}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-card rounded-2xl p-6 border border-border text-center"
+                className="bg-card rounded-2xl p-4 sm:p-6 border border-border text-center"
               >
                 <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
                   <info.icon className="w-5 h-5 text-accent" />
                 </div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{info.label}</p>
                 {info.href ? (
-                  <a href={info.href} className="font-semibold text-sm hover:text-accent transition-colors break-all">
-                    {info.value}
+                  <a 
+                    href={info.href} 
+                    target={info.target} 
+                    rel={info.target === "_blank" ? "noopener noreferrer" : undefined}
+                    className="block group"
+                  >
+                    <div className="space-y-1">
+                      {Array.isArray(info.value) ? (
+                        info.value.map((v, idx) => (
+                          <p key={idx} className="font-semibold text-sm group-hover:text-accent transition-colors break-all">
+                            {v}
+                          </p>
+                        ))
+                      ) : (
+                        <p className="font-semibold text-sm group-hover:text-accent transition-colors break-all">
+                          {info.value}
+                        </p>
+                      )}
+                      {info.sub && (
+                        Array.isArray(info.sub) ? (
+                          info.sub.map((s, idx) => (
+                            <p key={idx} className="text-xs text-muted-foreground group-hover:text-accent/80 transition-colors">
+                              {s}
+                            </p>
+                          ))
+                        ) : (
+                          <p className="text-xs text-muted-foreground group-hover:text-accent/80 transition-colors">
+                            {info.sub}
+                          </p>
+                        )
+                      )}
+                    </div>
                   </a>
                 ) : (
-                  <p className="font-semibold text-sm">{info.value}</p>
+                  <div className="space-y-1">
+                    {Array.isArray(info.value) ? (
+                      info.value.map((v, idx) => (
+                        <p key={idx} className="font-semibold text-sm">{v}</p>
+                      ))
+                    ) : (
+                      <p className="font-semibold text-sm">{info.value}</p>
+                    )}
+                    {info.sub && (
+                      Array.isArray(info.sub) ? (
+                        info.sub.map((s, idx) => (
+                          <p key={idx} className="text-xs text-muted-foreground">{s}</p>
+                        ))
+                      ) : (
+                        <p className="text-xs text-muted-foreground">{info.sub}</p>
+                      )
+                    )}
+                  </div>
                 )}
-                {info.sub && <p className="text-xs text-muted-foreground mt-1">{info.sub}</p>}
               </motion.div>
             ))}
           </div>

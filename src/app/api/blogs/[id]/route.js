@@ -9,7 +9,7 @@ export async function GET(request, { params }) {
     const { id: slugParam } = await params;
     const slug = decodeURIComponent(slugParam || '');
 
-    console.log("Requested slug:", slug);   // ← Debug
+    
 
     if (!slug) {
       return NextResponse.json({ error: "Slug is required" }, { status: 400 });

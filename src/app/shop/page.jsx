@@ -37,6 +37,7 @@ function ShopContent() {
       .then((r) => r.json())
       .then((res) => {
         const rawItems = res?._items || res?.items || [];
+        // console.log("RawItems==>",rawItems)
         const processed = rawItems.map(item => extractProductDetails(item));
         
         // Sort inStock first
@@ -45,7 +46,7 @@ function ShopContent() {
           if (!a.inStock && b.inStock) return 1;
           return 0;
         });
-
+// console.log('Products==>',sorted)
         setProducts(sorted);
         
         const uniqueBrands = Array.from(

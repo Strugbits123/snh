@@ -87,7 +87,7 @@ export async function POST(req) {
       info: info,
     };
 
-    console.log("Sending to Wix V4:", JSON.stringify(contactPayload, null, 2));
+    // console.log("Sending to Wix V4:", JSON.stringify(contactPayload, null, 2));
 
     const contactResponse = await fetch(
       "https://www.wixapis.com/contacts/v4/contacts",
@@ -99,7 +99,7 @@ export async function POST(req) {
     );
 
     const contactData = await contactResponse.json();
-    console.log("Wix Response:", JSON.stringify(contactData, null, 2));
+    // console.log("Wix Response:", JSON.stringify(contactData, null, 2));
 
     if (!contactResponse.ok) {
       console.error("Wix API Error:", contactData);

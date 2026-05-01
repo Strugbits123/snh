@@ -78,7 +78,6 @@ export default function Services() {
           "Battery prep & maintenance charging",
           "Full electrical & undercarriage inspection",
           "Tire pressure, fluids & lubrication",
-          "Indoor heated storage available",
           "Spring tune-up included",
         ],
         cta_text: "Book Winterization",

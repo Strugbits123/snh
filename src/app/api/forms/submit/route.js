@@ -94,11 +94,11 @@ export async function POST(req) {
 
     // 2. DEEP SCAN DISCOVERY: Find hidden Wix Field IDs by their labels
     try {
-      console.log(`Deep scanning form: ${formId}`);
+      // console.log(`Deep scanning form: ${formId}`);
       const form = await wixClient.submissions.getForm(formId);
       
       if (form && form.fields) {
-        console.log("Discovered form fields:", form.fields.map(f => `${f.label}: ${f._id}`));
+        // console.log("Discovered form fields:", form.fields.map(f => `${f.label}: ${f._id}`));
         
         form.fields.forEach(field => {
           const label = field.label?.toLowerCase() || "";
@@ -149,7 +149,7 @@ export async function POST(req) {
       }
     };
 
-    console.log("Submitting with doc-compliant payload:", JSON.stringify(submissionPayload, null, 2));
+    // console.log("Submitting with doc-compliant payload:", JSON.stringify(submissionPayload, null, 2));
 
     const formResponse = await fetch("https://www.wixapis.com/form-submission-service/v4/submissions", {
       method: "POST",
