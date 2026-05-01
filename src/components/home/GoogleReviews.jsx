@@ -23,7 +23,7 @@ const REVIEWS = [
     avatar: "SA",
     rating: 5,
     time: "a week ago",
-    text: "Great place to buy a golf cart, Bill and his team were amazing to deal with and I got exactly the cart I wanted at a really nice value. Thank you SNH Golf Carts!",
+    text: "Great place to buy a golf cart, Bill and his team were amazing to deal with and I got exactly the cart I wanted at a really nice value. Thank you SNH Golf Carts LLC!",
   },
   {
     name: "Judy L",

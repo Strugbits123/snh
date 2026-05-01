@@ -24,7 +24,7 @@ export async function POST(req) {
       description: p.description?.replace(/<[^>]*>?/gm, "").substring(0, 100),
     }));
 
-    const systemPrompt = `You are the SNH Golf Carts AI assistant. 
+    const systemPrompt = `You are the SNH Golf Carts LLC AI assistant. 
 Your goal is to help customers find the perfect golf cart.
 Be friendly, professional, and concise.
 

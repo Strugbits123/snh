@@ -50,7 +50,7 @@ export default function BlogDetail() {
         metaDesc.setAttribute("content", post.seoDescription || post.excerpt);
     }
     return () => {
-      document.title = "SNH Golf Carts";
+      document.title = "SNH Golf Carts LLC";
     };
   }, [post]);
 

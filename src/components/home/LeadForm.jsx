@@ -206,7 +206,7 @@ export default function LeadForm() {
       <div className="px-6 pt-6 pb-5 border-b border-white/10">
         <div className="flex items-center gap-2 mb-2">
           <Calendar className="w-3.5 h-3.5 text-accent" />
-          <span className="text-accent text-[10px] font-bold uppercase tracking-[0.2em] font-sans">Book with SNH Golf Carts</span>
+          <span className="text-accent text-[10px] font-bold uppercase tracking-[0.2em] font-sans">Book with SNH Golf Carts LLC</span>
         </div>
         <h2 className="text-white font-display font-bold text-xl leading-tight mb-1">Schedule an Appointment</h2>
         <p className="text-white/40 text-xs font-sans">Sales visit or service call — we are ready.</p>

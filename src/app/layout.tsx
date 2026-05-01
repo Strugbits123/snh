@@ -19,7 +19,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "SNH Golf Carts | Premium Electric Golf Carts in Southern NH",
+  title: "SNH Golf Carts LLC | Premium Electric Golf Carts in Southern NH",
   description:
     "Shop new and used electric golf carts, street-legal LSVs, and flexible rentals. Sold, serviced, and delivered across Southern NH.",
 };
