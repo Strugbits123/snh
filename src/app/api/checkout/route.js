@@ -1,159 +1,13 @@
-// import { NextResponse } from 'next/server';
-// import { wixClient } from '@/lib/wixClient';
-
-// export async function POST(req) {
-//   try {
-//     const body = await req.json();
-//     console.log("Body==>",body)
-//     const { lineItems, productId, quantity = 1, options } = body;
-
-//     // Normalize items (support single product or multiple lineItems)
-//     let normalizedItems = [];
-
-//     if (lineItems && Array.isArray(lineItems) && lineItems.length > 0) {
-//       normalizedItems = lineItems;
-//     } else if (productId) {
-//       normalizedItems = [{ productId, quantity, options }];
-//     }
-
-//     if (normalizedItems.length === 0) {
-//       return NextResponse.json(
-//         { error: "No items provided. Please send productId or lineItems array." },
-//         { status: 400 }
-//       );
-//     }
-// console.log("Normalized Items==>",normalizedItems)
-    
-//     // Debug: Fetch product to see its actual options and availability
-//     let wixProduct = null;
-//     try {
-//       if (productId) {
-//         wixProduct = await wixClient.products.getProduct(productId);
-//         console.log("Wix Product Details==>", JSON.stringify(wixProduct, null, 2));
-//       }
-//     } catch (e) {
-//       console.warn("Could not fetch product from Wix for debug:", e.message);
-//     }
-
-//     // 1. Create Checkout using direct Wix API call
-
-//     const isManaged = wixProduct?.product?.manageVariants;
-//     console.log("Is Managed Variants?==>", isManaged);
-
-//     const finalBody = {
-//       lineItems: normalizedItems.map((item) => ({
-//         quantity: Number(item.quantity) || 1,
-//         catalogReference: {
-//           appId: "215238eb-22a5-4c36-9e7b-e7c08025e04e",
-//           catalogItemId: item.productId,
-//           // ONLY send options in catalogReference if Wix manages them as variants
-//           ...(isManaged && item.options && {
-//             options: { choices: item.options?.choices || item.options }
-//           }),
-//         },
-//         // Always send overrides for safety and to show the selection (like Color)
-//         catalogOverrideFields: {
-//           productName: { original: item.productName || wixProduct?.product?.name },
-//           price: item.productPrice?.toString() || wixProduct?.product?.priceData?.price?.toString(),
-//           descriptionLines: (item.options?.choices || item.options) ? Object.entries(item.options?.choices || item.options).map(([name, value]) => ({
-//             name: { original: name },
-//             plainText: { original: String(value) }
-//           })) : []
-//         }
-//       })),
-//       channelType: "WEB",
-//     };
-//     console.log("Wix API Request Body==>", JSON.stringify(finalBody, null, 2));
-
-//     // 1. Create Checkout using direct Wix API call
-//     const checkoutResponse = await fetch("https://www.wixapis.com/ecom/v1/checkouts", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//         "Authorization": process.env.WIX_API_KEY,
-//         "wix-site-id": process.env.WIX_SITE_ID,
-//       },
-//       body: JSON.stringify(finalBody),
-//     });
-// console.log("Checkout Response==>",checkoutResponse)
-//     if (!checkoutResponse.ok) {
-//       const errorData = await checkoutResponse.json();
-//       console.error("Wix API Error:", errorData);
-//       throw new Error(errorData.message || `Wix API returned ${checkoutResponse.status}`);
-//     }
-
-//     const checkoutResult = await checkoutResponse.json();
-//     const checkoutId = checkoutResult.checkout?.id;
-
-//     if (!checkoutId) {
-//       return NextResponse.json(
-//         { error: "Failed to create checkout ID from Wix result." },
-//         { status: 500 }
-//       );
-//     }
-//     console.log("CheckoutResult==>",checkoutResult)
-// // const checkoutUrl = checkoutResult.checkout?.checkoutUrl;
-//    const urlResponse = await fetch(
-//   `https://www.wixapis.com/ecom/v1/checkouts/${checkoutId}/checkout-url`,
-//   {
-//     method: "GET",
-//     headers: {
-//       "Authorization": process.env.WIX_API_KEY,
-//       "wix-site-id": process.env.WIX_SITE_ID,
-//     },
-//   }
-// );
-
-// if (!urlResponse.ok) {
-//   const errData = await urlResponse.json().catch(() => ({}));
-//   console.error("Failed to get checkout URL:", errData);
-//   throw new Error("Could not retrieve checkout URL");
-// }
-
-// const urlData = await urlResponse.json();
-// console.log("Url==>",urlData)
-// const checkoutUrl = urlData.checkoutUrl;   // ← this should now have the value
-
-// console.log("Checkout URL ==>", checkoutUrl);
-
-//     return NextResponse.json({
-//       success: true,
-//       checkoutUrl: checkoutUrl,
-//       checkoutId,
-//     });
-
-//   } catch (err) {
-//     console.error("Wix Checkout Error:", err);
-    
-//     // Check for common OAuth errors
-//     if (err.message?.includes("client Id")) {
-//       return NextResponse.json(
-//         { 
-//           error: "Invalid WIX_CLIENT_ID. Please ensure you have a valid Headless OAuth Client ID from Wix.",
-//           details: err.message
-//         },
-//         { status: 401 }
-//       );
-//     }
-
-//     return NextResponse.json(
-//       { error: err.message || "Internal server error. Please try again." },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-
 import { NextResponse } from "next/server";
-import { wixClient } from "@/lib/wixClient";
 
 export async function POST(req) {
   try {
     const body = await req.json();
-    // console.log("Body==>", body);
-
     const { lineItems, productId, quantity = 1, options, productName, productPrice } = body;
 
+    console.log("Body==>", body);
+
+    // ── Normalize input ──────────────────────────────────────────────
     let normalizedItems = [];
 
     if (Array.isArray(lineItems) && lineItems.length > 0) {
@@ -162,6 +16,8 @@ export async function POST(req) {
       normalizedItems = [{ productId, quantity, options, productName, productPrice }];
     }
 
+    console.log("Normalized Items==>", normalizedItems);
+
     if (normalizedItems.length === 0) {
       return NextResponse.json(
         { error: "No items provided" },
@@ -169,116 +25,193 @@ export async function POST(req) {
       );
     }
 
-    // console.log("Normalized Items==>", normalizedItems);
+    const API_KEY = process.env.WIX_API_KEY;
+    const SITE_ID = process.env.WIX_SITE_ID;
 
-    // Fetch product (for option mapping)
-    let wixProduct = null;
-
-    if (productId) {
-      try {
-        wixProduct = await wixClient.products.getProduct(productId);
-        // console.log("Wix Product Loaded");
-      } catch (err) {
-        console.warn("Failed to fetch Wix product:", err.message);
-      }
+    if (!API_KEY || !SITE_ID) {
+      return NextResponse.json(
+        { error: "Server configuration error: Missing Wix credentials" },
+        { status: 500 }
+      );
     }
 
-    // -------------------------------
-    // 🔥 FIX: Convert option label → Wix value (white → #ffffff)
-    // -------------------------------
-    let resolvedOptions = {};
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": API_KEY,
+      "wix-site-id": SITE_ID,
+    };
 
-    if (wixProduct?.product?.productOptions && options) {
-      const colorOption = wixProduct.product.productOptions.find(
-        (opt) => opt.name === "Color"
-      );
+    // ── Build line items with proper variant resolution ───────────────
+    const resolvedLineItems = [];
 
-      if (colorOption && options.Color) {
-        const match = colorOption.choices.find(
-          (c) =>
-            c.description?.toLowerCase() === options.Color.toLowerCase()
-        );
+    for (const item of normalizedItems) {
+      const lineItem = {
+        quantity: Number(item.quantity) || 1,
+        catalogReference: {
+          appId: "215238eb-22a5-4c36-9e7b-e7c08025e04e", // Wix Stores App ID
+          catalogItemId: item.productId,
+        },
+      };
 
-        if (match) {
-          resolvedOptions.Color = match.value; // ✅ HEX value
+      // If the item has options (e.g., Color), resolve the variantId
+      const itemOptions = item.options || options;
+
+      if (itemOptions && Object.keys(itemOptions).length > 0) {
+        // Step 1: Fetch the product to get proper option names
+        let wixProduct = null;
+        try {
+          const prodRes = await fetch(
+            `https://www.wixapis.com/stores/v1/products/${item.productId}`,
+            { method: "GET", headers }
+          );
+          if (prodRes.ok) {
+            const prodData = await prodRes.json();
+            wixProduct = prodData.product;
+            console.log("Wix Product Loaded:", wixProduct?.name);
+            console.log("Product manageVariants:", wixProduct?.manageVariants);
+            console.log("Product Options:", JSON.stringify(wixProduct?.productOptions));
+          }
+        } catch (err) {
+          console.warn("Failed to fetch Wix product:", err.message);
+        }
+
+        // Step 2: Build the choices object for variant query
+        // Map the incoming option values to the exact choice descriptions
+        const choices = {};
+
+        if (wixProduct?.productOptions) {
+          for (const [optName, optValue] of Object.entries(itemOptions)) {
+            const wixOpt = wixProduct.productOptions.find(
+              (o) => o.name?.toLowerCase() === optName.toLowerCase()
+            );
+
+            if (wixOpt && wixOpt.choices) {
+              const match = wixOpt.choices.find(
+                (c) =>
+                  c.description?.toLowerCase() === String(optValue).toLowerCase() ||
+                  c.value?.toLowerCase() === String(optValue).toLowerCase()
+              );
+
+              if (match) {
+                choices[wixOpt.name] = match.description;
+                console.log(`Resolved option "${optName}": "${optValue}" → "${match.description}"`);
+              } else {
+                choices[wixOpt.name] = String(optValue);
+                console.warn(`No exact match for option "${optName}": "${optValue}", using as-is`);
+              }
+            } else {
+              choices[optName] = String(optValue);
+            }
+          }
+        } else {
+          // No product data, pass options as-is
+          for (const [k, v] of Object.entries(itemOptions)) {
+            choices[k] = String(v);
+          }
+        }
+
+        console.log("Resolved Choices==>", choices);
+
+        // Step 3: Query product variants to get the variantId
+        if (wixProduct?.manageVariants && Object.keys(choices).length > 0) {
+          try {
+            const variantRes = await fetch(
+              `https://www.wixapis.com/stores/v1/products/${item.productId}/variants/query`,
+              {
+                method: "POST",
+                headers,
+                body: JSON.stringify({
+                  choices,
+                  includeMerchantSpecificData: false,
+                }),
+              }
+            );
+
+            if (variantRes.ok) {
+              const variantData = await variantRes.json();
+              const variants = variantData.variants || [];
+              console.log("Variant query returned:", variants.length, "variants");
+
+              if (variants.length > 0) {
+                const variantId = variants[0].id || variants[0]._id;
+                console.log("Using variantId:", variantId);
+
+                // Pass the variantId in the catalogReference options
+                lineItem.catalogReference.options = {
+                  variantId: variantId,
+                };
+              } else {
+                console.warn("No variant found for choices:", choices);
+                // Fallback: pass choices as options.options
+                lineItem.catalogReference.options = {
+                  options: choices,
+                };
+              }
+            } else {
+              const variantError = await variantRes.text();
+              console.warn("Variant query failed:", variantRes.status, variantError);
+              // Fallback: pass choices as options.options
+              lineItem.catalogReference.options = {
+                options: choices,
+              };
+            }
+          } catch (err) {
+            console.warn("Variant query error:", err.message);
+            lineItem.catalogReference.options = {
+              options: choices,
+            };
+          }
+        } else if (Object.keys(choices).length > 0) {
+          // Product doesn't manage variants, pass options directly
+          lineItem.catalogReference.options = {
+            options: choices,
+          };
         }
       }
+
+      resolvedLineItems.push(lineItem);
     }
 
-    // console.log("Resolved Options==>", resolvedOptions);
-
-    // -------------------------------
-    // Build Wix Checkout Payload
-    // -------------------------------
-    const finalBody = {
-      lineItems: normalizedItems.map((item) => ({
-        quantity: Number(item.quantity) || 1,
-
-        catalogReference: {
-          appId: "215238eb-22a5-4c36-9e7b-e7c08025e04e",
-          catalogItemId: item.productId,
-
-     
-          ...(resolvedOptions &&
-            Object.keys(resolvedOptions).length > 0 && {
-              options: {
-                choices: {"Color":"white"},
-              },
-            }),
-        },
-
-        // UI only overrides (safe)
-        catalogOverrideFields: {
-          productName: {
-            original: item.productName || wixProduct?.product?.name,
-          },
-          price:
-            item.productPrice?.toString() ||
-            wixProduct?.product?.priceData?.price?.toString(),
-
-          descriptionLines:
-            resolvedOptions && Object.keys(resolvedOptions).length > 0
-              ? Object.entries(resolvedOptions).map(([name, value]) => ({
-                  name: { original: name },
-                  plainText: { original: String(value) },
-                }))
-              : [],
-        },
-      })),
-
+    // ── Build Checkout Payload ────────────────────────────────────────
+    const checkoutPayload = {
+      lineItems: resolvedLineItems,
       channelType: "WEB",
     };
 
-    // console.log("Wix API Request Body==>", JSON.stringify(finalBody, null, 2));
+    console.log("Wix API Request Body==>", JSON.stringify(checkoutPayload, null, 2));
 
-    // -------------------------------
-    // Create Checkout
-    // -------------------------------
+    // ── Step 1: Create Checkout ───────────────────────────────────────
     const checkoutResponse = await fetch(
       "https://www.wixapis.com/ecom/v1/checkouts",
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: process.env.WIX_API_KEY,
-          "wix-site-id": process.env.WIX_SITE_ID,
-        },
-        body: JSON.stringify(finalBody),
+        headers,
+        body: JSON.stringify(checkoutPayload),
       }
     );
 
+    const checkoutData = await checkoutResponse.json();
+
     console.log("Checkout Response Status==>", checkoutResponse.status);
+    console.log("CheckoutResult==>", checkoutData);
 
     if (!checkoutResponse.ok) {
-      const errorData = await checkoutResponse.json();
-      console.error("Wix API Error:", errorData);
-      throw new Error(errorData.message || "Wix checkout failed");
+      console.error("Wix Checkout Error:", JSON.stringify(checkoutData, null, 2));
+      return NextResponse.json(
+        {
+          error: checkoutData.message || "Failed to create checkout",
+          details: checkoutData,
+        },
+        { status: checkoutResponse.status }
+      );
     }
 
-    const checkoutResult = await checkoutResponse.json();
-    // console.log("CheckoutResult==>", checkoutResult);
+    const checkoutId = checkoutData.checkout?.id;
+    const returnedLineItems = checkoutData.checkout?.lineItems || [];
 
-    const checkoutId = checkoutResult.checkout?.id;
+    console.log("Checkout ID==>", checkoutId);
+    console.log("Returned lineItems count==>", returnedLineItems.length);
+    console.log("Checkout total==>", checkoutData.checkout?.priceSummary?.total?.formattedAmount);
 
     if (!checkoutId) {
       return NextResponse.json(
@@ -287,43 +220,75 @@ export async function POST(req) {
       );
     }
 
-    // -------------------------------
-    // Get Checkout URL
-    // -------------------------------
-    const urlResponse = await fetch(
-      `https://www.wixapis.com/ecom/v1/checkouts/${checkoutId}/checkout-url`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: process.env.WIX_API_KEY,
-          "wix-site-id": process.env.WIX_SITE_ID,
-        },
-      }
-    );
-
-    if (!urlResponse.ok) {
-      const errData = await urlResponse.json().catch(() => ({}));
-      console.error("URL Error:", errData);
-      throw new Error("Failed to get checkout URL");
+    // Warn if lineItems came back empty
+    if (returnedLineItems.length === 0) {
+      console.warn("⚠️ WARNING: Wix returned empty lineItems. Possible causes:");
+      console.warn("  1. The variant options don't match any valid variant");
+      console.warn("  2. The product is out of stock in Wix");
+      console.warn("  3. The catalogItemId doesn't match a real product");
+      console.warn("  4. The product is hidden or not published");
     }
 
-    const urlData = await urlResponse.json();
+    // ── Step 2: Get Wix-Hosted Checkout URL via Redirect Session ─────
+    // Use the Wix JS SDK which knows the correct endpoint internally.
+    // The checkout-url REST endpoint returns a URL on our Next.js domain
+    // which doesn't have a checkout page — we need the Wix-hosted one.
+    const { wixClient } = await import("@/lib/wixClient");
 
-    // console.log("Checkout URL==>", urlData.checkoutUrl);
+    const origin = req.nextUrl?.origin || process.env.NEXT_PUBLIC_SITE_URL || "https://www.snhgolfcarts.com";
 
-    return NextResponse.json({
-      success: true,
-      checkoutUrl: urlData.checkoutUrl,
-      checkoutId,
-    });
+    try {
+      const redirectSession = await wixClient.redirects.createRedirectSession({
+        ecomCheckout: { checkoutId },
+        callbacks: {
+          postFlowUrl: `${origin}/order-confirmation`,
+        },
+      });
+
+      const checkoutUrl = redirectSession.redirectSession?.fullUrl;
+      console.log("Wix Hosted Checkout URL==>", checkoutUrl);
+
+      if (checkoutUrl) {
+        return NextResponse.json({
+          success: true,
+          checkoutUrl,
+          checkoutId,
+        });
+      }
+
+      console.error("No fullUrl in redirect session:", JSON.stringify(redirectSession));
+      return NextResponse.json(
+        { error: "Failed to get Wix checkout URL" },
+        { status: 500 }
+      );
+    } catch (redirectErr) {
+      console.error("Redirect Session SDK Error:", redirectErr.message || redirectErr);
+
+      // Fallback: return the checkout-url endpoint result (will be on site domain)
+      const urlResponse = await fetch(
+        `https://www.wixapis.com/ecom/v1/checkouts/${checkoutId}/checkout-url`,
+        { method: "GET", headers }
+      );
+      if (urlResponse.ok) {
+        const urlData = await urlResponse.json();
+        console.log("Fallback checkout URL==>", urlData.checkoutUrl);
+        return NextResponse.json({
+          success: true,
+          checkoutUrl: urlData.checkoutUrl,
+          checkoutId,
+        });
+      }
+
+      return NextResponse.json(
+        { error: redirectErr.message || "Failed to create redirect session" },
+        { status: 500 }
+      );
+    }
 
   } catch (err) {
-    console.error("Checkout Error:", err);
-
+    console.error("Checkout API Error:", err);
     return NextResponse.json(
-      {
-        error: err.message || "Internal server error",
-      },
+      { error: err.message || "Internal server error. Please try again." },
       { status: 500 }
     );
   }
