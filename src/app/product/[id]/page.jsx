@@ -290,7 +290,12 @@ export default function ProductDetail() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-16 bg-muted/40 rounded-3xl p-8"
           >
-            <h2 className="font-display font-bold text-2xl mb-6">About This Cart</h2>
+            <h2 className="font-display font-bold text-2xl mb-6">
+              About This{" "}
+              {cart.ribbon?.toLowerCase().includes("accessories")
+                ? "Accessory"
+                : "Cart"}
+            </h2>
             <div
               className="prose prose-sm max-w-none text-muted-foreground [&_strong]:text-foreground [&_ul]:list-none [&_ul]:p-0 [&_li]:flex [&_li]:items-start [&_li]:gap-2 [&_li]:mb-1"
               dangerouslySetInnerHTML={{ __html: cart.description }}

@@ -7,7 +7,7 @@ export async function POST(req) {
 
     console.log("Body==>", body);
 
-    // ── Normalize input ──────────────────────────────────────────────
+
     let normalizedItems = [];
 
     if (Array.isArray(lineItems) && lineItems.length > 0) {
@@ -41,23 +41,23 @@ export async function POST(req) {
       "wix-site-id": SITE_ID,
     };
 
-    // ── Build line items with proper variant resolution ───────────────
+   
     const resolvedLineItems = [];
 
     for (const item of normalizedItems) {
       const lineItem = {
         quantity: Number(item.quantity) || 1,
         catalogReference: {
-          appId: "215238eb-22a5-4c36-9e7b-e7c08025e04e", // Wix Stores App ID
+          appId: "215238eb-22a5-4c36-9e7b-e7c08025e04e", 
           catalogItemId: item.productId,
         },
       };
 
-      // If the item has options (e.g., Color), resolve the variantId
+
       const itemOptions = item.options || options;
 
       if (itemOptions && Object.keys(itemOptions).length > 0) {
-        // Step 1: Fetch the product to get proper option names
+      
         let wixProduct = null;
         try {
           const prodRes = await fetch(
@@ -75,8 +75,7 @@ export async function POST(req) {
           console.warn("Failed to fetch Wix product:", err.message);
         }
 
-        // Step 2: Build the choices object for variant query
-        // Map the incoming option values to the exact choice descriptions
+
         const choices = {};
 
         if (wixProduct?.productOptions) {
@@ -104,7 +103,7 @@ export async function POST(req) {
             }
           }
         } else {
-          // No product data, pass options as-is
+        
           for (const [k, v] of Object.entries(itemOptions)) {
             choices[k] = String(v);
           }
@@ -112,7 +111,7 @@ export async function POST(req) {
 
         console.log("Resolved Choices==>", choices);
 
-        // Step 3: Query product variants to get the variantId
+     
         if (wixProduct?.manageVariants && Object.keys(choices).length > 0) {
           try {
             const variantRes = await fetch(
@@ -136,13 +135,13 @@ export async function POST(req) {
                 const variantId = variants[0].id || variants[0]._id;
                 console.log("Using variantId:", variantId);
 
-                // Pass the variantId in the catalogReference options
+               
                 lineItem.catalogReference.options = {
                   variantId: variantId,
                 };
               } else {
                 console.warn("No variant found for choices:", choices);
-                // Fallback: pass choices as options.options
+            
                 lineItem.catalogReference.options = {
                   options: choices,
                 };
@@ -150,7 +149,7 @@ export async function POST(req) {
             } else {
               const variantError = await variantRes.text();
               console.warn("Variant query failed:", variantRes.status, variantError);
-              // Fallback: pass choices as options.options
+   
               lineItem.catalogReference.options = {
                 options: choices,
               };
@@ -162,7 +161,7 @@ export async function POST(req) {
             };
           }
         } else if (Object.keys(choices).length > 0) {
-          // Product doesn't manage variants, pass options directly
+        
           lineItem.catalogReference.options = {
             options: choices,
           };
@@ -172,7 +171,7 @@ export async function POST(req) {
       resolvedLineItems.push(lineItem);
     }
 
-    // ── Build Checkout Payload ────────────────────────────────────────
+ 
     const checkoutPayload = {
       lineItems: resolvedLineItems,
       channelType: "WEB",
@@ -180,7 +179,7 @@ export async function POST(req) {
 
     console.log("Wix API Request Body==>", JSON.stringify(checkoutPayload, null, 2));
 
-    // ── Step 1: Create Checkout ───────────────────────────────────────
+
     const checkoutResponse = await fetch(
       "https://www.wixapis.com/ecom/v1/checkouts",
       {
@@ -220,7 +219,7 @@ export async function POST(req) {
       );
     }
 
-    // Warn if lineItems came back empty
+ 
     if (returnedLineItems.length === 0) {
       console.warn("⚠️ WARNING: Wix returned empty lineItems. Possible causes:");
       console.warn("  1. The variant options don't match any valid variant");
@@ -229,10 +228,7 @@ export async function POST(req) {
       console.warn("  4. The product is hidden or not published");
     }
 
-    // ── Step 2: Get Wix-Hosted Checkout URL via Redirect Session ─────
-    // Use the Wix JS SDK which knows the correct endpoint internally.
-    // The checkout-url REST endpoint returns a URL on our Next.js domain
-    // which doesn't have a checkout page — we need the Wix-hosted one.
+
     const { wixClient } = await import("@/lib/wixClient");
 
     const origin = req.nextUrl?.origin || process.env.NEXT_PUBLIC_SITE_URL || "https://www.snhgolfcarts.com";
