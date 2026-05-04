@@ -30,28 +30,32 @@ export function extractProductDetails(product, collections = []) {
 
   const name = product.name || "";
   
-  // New Brand Discovery Logic: Use Wix Collections (Categories)
-  // We look for collections that match known brands or the "Accessories" category
+  // New Dynamic Brand Discovery Logic:
   const productCollectionIds = product.collectionIds || [];
   const productCollections = collections.filter(c => productCollectionIds.includes(c._id || c.id));
-  const collectionNames = productCollections.map(c => c.name?.toLowerCase() || "");
   
-  const brandsList = ["evolution", "teko", "dach", "tomberlin", "ezgo", "club car", "yamaha", "bintelli", "vivid", "icon"];
   let brand = "Evolution"; // Default fallback
   let isAccessory = false;
 
-  // 1. Check if it's an accessory
-  if (collectionNames.some(cn => cn.includes("accessor"))) {
-    isAccessory = true;
-  }
-
-  // 2. Extract Brand from collections
-  for (const b of brandsList) {
-    if (collectionNames.some(cn => cn === b || cn.includes(b))) {
-      brand = b.charAt(0).toUpperCase() + b.slice(1);
-      break;
+  // 1. Identify if it's an accessory and find the most relevant brand
+  productCollections.forEach(coll => {
+    const collName = coll.name?.toLowerCase() || "";
+    
+    // Check for Accessory status
+    if (collName.includes("accessor")) {
+      isAccessory = true;
     }
-  }
+
+    // A "Brand" collection is typically one that:
+    // - Is NOT "All", "All Products", "Accessories"
+    // - Does NOT contain "SERIES"
+    const isNotSystem = !["all", "all products", "accessories"].includes(collName);
+    const isNotSeries = !collName.includes("series");
+
+    if (isNotSystem && isNotSeries) {
+      brand = coll.name; // Use the actual name from Wix (preserves casing)
+    }
+  });
 
   // Clean up name if it starts with brand (only for display, preserving original for filters if needed)
   let displayName = name;
