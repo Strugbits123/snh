@@ -38,8 +38,12 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
           <div className="lg:col-span-2">
-            <div className="font-display font-bold text-2xl mb-4">
-              SNH <span className="text-accent">GOLF CARTS</span>
+            <div className="mb-4">
+              <img 
+                src="/Logo-png-b.png" 
+                alt="SNH Golf Carts" 
+                className="h-12 w-auto object-contain"
+              />
             </div>
             <p className="text-white/60 text-sm leading-relaxed max-w-sm mb-6">
               Premium electric golf carts and LSVs for every lifestyle.

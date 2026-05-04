@@ -22,6 +22,20 @@ export const metadata: Metadata = {
   title: "SNH Golf Carts LLC | Premium Electric Golf Carts in Southern NH",
   description:
     "Shop new and used electric golf carts, street-legal LSVs, and flexible rentals. Sold, serviced, and delivered across Southern NH.",
+  icons: {
+    icon: [
+      {
+        url: "/favicon-b@2x.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/favicon-w@2x.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+    shortcut: "/favicon-b@2x.png",
+    apple: "/favicon-b@2x.png",
+  },
 };
 
 export default function RootLayout({

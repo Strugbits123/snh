@@ -29,7 +29,9 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => { 
+    setOpen(false);
+  }, [pathname]);
 
   const isHome = pathname === "/";
   const navBg = scrolled || !isHome
@@ -41,10 +43,12 @@ export default function Navbar() {
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${navBg}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className={`font-display font-bold text-xl tracking-tight whitespace-nowrap ${textColor}`}>
-              SNH <span className="text-accent">GOLF CARTS</span>
-            </div>
+                <Link href="/" className="flex items-center gap-2 shrink-0">
+            <img 
+              src={scrolled || !isHome ? "/Logo-png-w.png" : "/Logo-png-b.png"} 
+              alt="SNH Golf Carts" 
+              className="h-10 w-auto object-contain transition-all duration-300"
+            />
           </Link>
 
           <div className="hidden lg:flex items-center gap-0.5 xl:gap-1">
