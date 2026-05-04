@@ -10,7 +10,7 @@ export const isIframe = typeof window !== 'undefined' && window.self !== window.
 /**
  * Extracts specifications like Seats, Range, Top Speed, and Battery from Wix product data.
  */
-export function extractProductDetails(product) {
+export function extractProductDetails(product, collections = []) {
   if (!product) return {};
 
   // Extract colors from productOptions
@@ -29,23 +29,31 @@ export function extractProductDetails(product) {
   }
 
   const name = product.name || "";
-  let brand = "Evolution"; // Default
-  const brandsList = ["evolution", "teko", "dach", "tomberlin", "ezgo", "club car", "yamaha", "bintelli", "vivid", "icon"];
-  const nameLower = name.toLowerCase();
   
+  // New Brand Discovery Logic: Use Wix Collections (Categories)
+  // We look for collections that match known brands or the "Accessories" category
+  const productCollectionIds = product.collectionIds || [];
+  const productCollections = collections.filter(c => productCollectionIds.includes(c._id || c.id));
+  const collectionNames = productCollections.map(c => c.name?.toLowerCase() || "");
+  
+  const brandsList = ["evolution", "teko", "dach", "tomberlin", "ezgo", "club car", "yamaha", "bintelli", "vivid", "icon"];
+  let brand = "Evolution"; // Default fallback
+  let isAccessory = false;
+
+  // 1. Check if it's an accessory
+  if (collectionNames.some(cn => cn.includes("accessor"))) {
+    isAccessory = true;
+  }
+
+  // 2. Extract Brand from collections
   for (const b of brandsList) {
-    if (nameLower.includes(b)) {
+    if (collectionNames.some(cn => cn === b || cn.includes(b))) {
       brand = b.charAt(0).toUpperCase() + b.slice(1);
       break;
     }
   }
 
-  // Fallback to first word if no match
-  if (brand === "Evolution" && !nameLower.includes("evolution")) {
-    brand = name.split(' ')[0] || "Evolution";
-  }
-
-  // Clean up name if it starts with brand
+  // Clean up name if it starts with brand (only for display, preserving original for filters if needed)
   let displayName = name;
   if (displayName.toLowerCase().startsWith(brand.toLowerCase())) {
     displayName = displayName.slice(brand.length).trim();
@@ -53,11 +61,13 @@ export function extractProductDetails(product) {
 
   const details = {
     name: displayName,
+    fullName: name,
     seats: null,
     range: null,
     topSpeed: null,
     battery: null,
     brand: brand,
+    isAccessory: isAccessory,
     price: product.priceData?.price || product.price?.price,
     formattedPrice: product.priceData?.formatted?.price || product.price?.formatted?.price,
     image: product.media?.mainMedia?.image?.url || product.image,

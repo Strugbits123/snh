@@ -39,27 +39,38 @@ export default function ProductDetail() {
     setLoading(true);
     setActiveImage(0);
 
-    wixProxy("products", "query", { filters: { _id: id } })
-      .then(async (res) => {
-        const rawProduct = res._items?.[0] || res.items?.[0] || res.data?.product;
+    // Fetch products and collections from our combined API
+    fetch("/api/products")
+      .then((r) => r.json())
+      .then((res) => {
+        const rawProducts = res.products || [];
+        const collections = res.collections || [];
+        
+        const rawProduct = rawProducts.find(p => (p._id || p.id) === id);
+        
         if (rawProduct) {
-          const product = extractProductDetails(rawProduct);
+          const product = extractProductDetails(rawProduct, collections);
           setCart(product);
           if (product.colors?.length > 0) {
             setSelectedOptions({ [product.colorOptionName]: product.colors[0] });
           }
           
-          const allRes = await wixProxy("products", "query");
-          const allRaw = allRes._items || allRes.items || allRes.data?.products || [];
-          const processed = allRaw.map(item => extractProductDetails(item));
-          setRelated(
-            processed
-              .filter((c) => c.id !== id && c.brand === product.brand)
-              .slice(0, 3)
-          );
+          const processed = rawProducts.map(item => extractProductDetails(item, collections));
+          
+          // Related logic: 
+          // If accessory, show other accessories. 
+          // If golf cart, show other carts from same brand.
+          let relatedItems = [];
+          if (product.isAccessory) {
+            relatedItems = processed.filter(p => p.isAccessory && p.id !== id);
+          } else {
+            relatedItems = processed.filter(p => !p.isAccessory && p.brand === product.brand && p.id !== id);
+          }
+          
+          setRelated(relatedItems.slice(0, 3));
         }
       })
-      .catch((err) => console.error("Error fetching product:", err))
+      .catch((err) => console.error("Error fetching product details:", err))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -291,10 +302,7 @@ export default function ProductDetail() {
             className="mt-16 bg-muted/40 rounded-3xl p-8"
           >
             <h2 className="font-display font-bold text-2xl mb-6">
-              About This{" "}
-              {cart.ribbon?.toLowerCase().includes("accessories")
-                ? "Accessory"
-                : "Cart"}
+              About This {cart.isAccessory ? "Accessory" : "Cart"}
             </h2>
             <div
               className="prose prose-sm max-w-none text-muted-foreground [&_strong]:text-foreground [&_ul]:list-none [&_ul]:p-0 [&_li]:flex [&_li]:items-start [&_li]:gap-2 [&_li]:mb-1"
@@ -306,7 +314,9 @@ export default function ProductDetail() {
         {/* Related Products */}
         {related.length > 0 && (
           <section className="mt-24">
-            <h2 className="font-display font-bold text-2xl mb-8">More from {cart.brand}</h2>
+            <h2 className="font-display font-bold text-2xl mb-8">
+              {cart.isAccessory ? "More Accessories" : `More from ${cart.brand}`}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {related.map((c, i) => (
                 <ProductCard key={c.id} cart={c} index={i} />

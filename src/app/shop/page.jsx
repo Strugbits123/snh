@@ -39,9 +39,13 @@ function ShopContent() {
     fetch("/api/products")
       .then((r) => r.json())
       .then((res) => {
-        const rawItems = res?._items || res?.items || [];
-        console.log("RawItems==>", rawItems);
-        const processed = rawItems.map((item) => extractProductDetails(item));
+        const rawItems = res.products || [];
+        const collections = res.collections || [];
+
+        // console.log("RawItems==>",rawItems);
+        // console.log("Colectioms==>",collections)
+        
+        const processed = rawItems.map((item) => extractProductDetails(item, collections));
 
         // Sort inStock first
         const sorted = processed.sort((a, b) => {
@@ -49,7 +53,7 @@ function ShopContent() {
           if (!a.inStock && b.inStock) return 1;
           return 0;
         });
-        // console.log('Products==>',sorted)
+        
         setProducts(sorted);
 
         const uniqueBrands = Array.from(
@@ -72,8 +76,7 @@ function ShopContent() {
 
   // Filter products by category FIRST to get dynamic options
   const categoryProducts = products.filter((p) => {
-    const isAccessory = p.ribbon?.toLowerCase().includes("accessories");
-    return categoryFilter === "Golf Carts" ? !isAccessory : isAccessory;
+    return categoryFilter === "Golf Carts" ? !p.isAccessory : p.isAccessory;
   });
 
   const categoryBrands = Array.from(
@@ -94,8 +97,9 @@ function ShopContent() {
       else if (seatFilter === "8 Seats") seatMatch = p.seats >= 8;
     }
 
-    // Make filter (Case-Insensitive Match)
+    // Make filter (Case-Insensitive Match) - ONLY apply for Golf Carts
     const makeMatch =
+      categoryFilter === "Accessories" ||
       makeFilter === "All" ||
       (p.brand && p.brand.toLowerCase() === makeFilter.toLowerCase());
 
@@ -167,18 +171,20 @@ function ShopContent() {
           ))}
         </div>
 
-        <ShopFilterBar
-          brands={categoryBrands}
-          seatFilter={seatFilter}
-          setSeatFilter={setSeatFilter}
-          makeFilter={makeFilter}
-          setMakeFilter={setMakeFilter}
-          colorFilter={colorFilter}
-          setColorFilter={setColorFilter}
-          colorOptions={categoryColors}
-          category={categoryFilter}
-          count={filtered.length}
-        />
+        {categoryFilter === "Golf Carts" && (
+          <ShopFilterBar
+            brands={categoryBrands}
+            seatFilter={seatFilter}
+            setSeatFilter={setSeatFilter}
+            makeFilter={makeFilter}
+            setMakeFilter={setMakeFilter}
+            colorFilter={colorFilter}
+            setColorFilter={setColorFilter}
+            colorOptions={categoryColors}
+            category={categoryFilter}
+            count={filtered.length}
+          />
+        )}
 
         {loading ?
           <div className="flex justify-center py-32">

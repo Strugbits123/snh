@@ -41,7 +41,7 @@ export default function ShopFilterBar({
 }) {
   const makeOptions = ["All", ...brands.filter((b) => b !== "All")];
   const colors = ["All", ...colorOptions];
-  const showSeats = category === "Golf Carts";
+  const isGolfCart = category === "Golf Carts";
 
   return (
     <div className="bg-card border border-border rounded-2xl px-5 py-4 mb-10 shadow-sm">
@@ -50,7 +50,7 @@ export default function ShopFilterBar({
         <div className="flex flex-col gap-5 flex-1">
           {/* Row 1: Seats + Make */}
           <div className="flex flex-col sm:flex-row flex-wrap gap-5">
-            {showSeats && (
+            {isGolfCart && (
               <FilterGroup
                 label="Seats"
                 options={SEAT_OPTIONS}
@@ -58,17 +58,19 @@ export default function ShopFilterBar({
                 onChange={setSeatFilter}
               />
             )}
-            <FilterGroup
-              label="Make"
-              options={makeOptions}
-              value={makeFilter}
-              onChange={setMakeFilter}
-              divider={showSeats}
-            />
+            {isGolfCart && (
+              <FilterGroup
+                label="Make"
+                options={makeOptions}
+                value={makeFilter}
+                onChange={setMakeFilter}
+                divider={isGolfCart}
+              />
+            )}
           </div>
 
           {/* Row 2: Color (Only for Golf Carts) */}
-          {showSeats && (
+          {isGolfCart && (
             <>
               <div className="w-full h-px bg-border" />
               <FilterGroup
