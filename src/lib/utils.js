@@ -67,7 +67,8 @@ export function extractProductDetails(product) {
     slug: product.slug,
     id: product._id || product.id,
     colors: colors,
-    colorOptionName: colorOption?.name || "Color"
+    colorOptionName: colorOption?.name || "Color",
+    ribbon: product.ribbon || (product.ribbons && product.ribbons[0]?.text) || ""
   };
 
   const fullText = (
@@ -76,17 +77,33 @@ export function extractProductDetails(product) {
     (product.additionalInfoSections || []).map(s => s.title + " " + s.description).join(" ")
   ).toLowerCase();
 
-  // Extract Seats
-  const seatMatch = fullText.match(/(\d+)\s*(-|plus|passengers?|seats?|seater)/i) || 
-                   fullText.match(/seating arrangement for (\w+)/i);
-  if (seatMatch) {
-    const val = seatMatch[1];
-    const wordToNum = { "two": 2, "four": 4, "six": 6, "eight": 8 };
-    details.seats = wordToNum[val.toLowerCase()] || parseInt(val) || val;
-  } else if (product.name?.includes("4")) {
-    details.seats = 4;
-  } else if (product.name?.includes("6")) {
-    details.seats = 6;
+  // Extract Seats - Prioritize additionalInfoSections
+  const seatingSection = (product.additionalInfoSections || []).find(
+    (s) => s.title?.toLowerCase() === "seating"
+  );
+
+  if (seatingSection) {
+    // Extract number from description (e.g., "<p>4</p>")
+    const sMatch = seatingSection.description.match(/(\d+)/);
+    if (sMatch) {
+      details.seats = parseInt(sMatch[1]);
+    }
+  }
+
+  // Fallback to regex if not found in additionalInfoSections
+  if (!details.seats) {
+    const seatMatch =
+      fullText.match(/(\d+)\s*(-|plus|passengers?|seats?|seater)/i) ||
+      fullText.match(/seating arrangement for (\w+)/i);
+    if (seatMatch) {
+      const val = seatMatch[1];
+      const wordToNum = { two: 2, four: 4, six: 6, eight: 8 };
+      details.seats = wordToNum[val.toLowerCase()] || parseInt(val) || val;
+    } else if (product.name?.includes("4")) {
+      details.seats = 4;
+    } else if (product.name?.includes("6")) {
+      details.seats = 6;
+    }
   }
 
   // Extract Range

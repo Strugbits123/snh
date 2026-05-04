@@ -15,6 +15,12 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
+  useEffect(() => {
+    const handleOpenChat = () => openChat();
+    window.addEventListener("open-ai-chat", handleOpenChat);
+    return () => window.removeEventListener("open-ai-chat", handleOpenChat);
+  }, [greeted]);
+
   function openChat() {
     setOpen(true);
     if (!greeted) {

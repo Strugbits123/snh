@@ -2,7 +2,7 @@
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { wixClient } from "@/lib/wixClient";
-import { Loader2 } from "lucide-react";
+import { Loader2, Phone } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import SectionHeading from "@/components/SectionHeading";
 import ShopFilterBar from "@/components/ShopFilterBar";
@@ -16,6 +16,7 @@ function ShopContent() {
   const [seatFilter, setSeatFilter] = useState("All");
   const [makeFilter, setMakeFilter] = useState("All");
   const [colorFilter, setColorFilter] = useState("All");
+  const [categoryFilter, setCategoryFilter] = useState("Golf Carts");
 
   // Handle query params on load and change
   useEffect(() => {
@@ -23,7 +24,9 @@ function ShopContent() {
     if (make) {
       // Find the actual brand name from the brands list to maintain consistent casing
       // But for initial load before brands are fetched, we just set it.
-      const actualBrand = brands.find(b => b.toLowerCase() === make.toLowerCase());
+      const actualBrand = brands.find(
+        (b) => b.toLowerCase() === make.toLowerCase()
+      );
       setMakeFilter(actualBrand || make);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
@@ -37,18 +40,18 @@ function ShopContent() {
       .then((r) => r.json())
       .then((res) => {
         const rawItems = res?._items || res?.items || [];
-        // console.log("RawItems==>",rawItems)
-        const processed = rawItems.map(item => extractProductDetails(item));
-        
+        console.log("RawItems==>", rawItems);
+        const processed = rawItems.map((item) => extractProductDetails(item));
+
         // Sort inStock first
         const sorted = processed.sort((a, b) => {
           if (a.inStock && !b.inStock) return -1;
           if (!a.inStock && b.inStock) return 1;
           return 0;
         });
-// console.log('Products==>',sorted)
+        // console.log('Products==>',sorted)
         setProducts(sorted);
-        
+
         const uniqueBrands = Array.from(
           new Set(sorted.map((p) => p.brand).filter(Boolean))
         );
@@ -57,7 +60,9 @@ function ShopContent() {
         // If we have a makeFilter from URL, check if it matches any real brand (case-insensitive)
         const make = searchParams.get("make");
         if (make) {
-          const matchedBrand = uniqueBrands.find(b => b.toLowerCase() === make.toLowerCase());
+          const matchedBrand = uniqueBrands.find(
+            (b) => b.toLowerCase() === make.toLowerCase()
+          );
           if (matchedBrand) setMakeFilter(matchedBrand);
         }
       })
@@ -65,26 +70,53 @@ function ShopContent() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = products.filter((p) => {
+  // Filter products by category FIRST to get dynamic options
+  const categoryProducts = products.filter((p) => {
+    const isAccessory = p.ribbon?.toLowerCase().includes("accessories");
+    return categoryFilter === "Golf Carts" ? !isAccessory : isAccessory;
+  });
+
+  const categoryBrands = Array.from(
+    new Set(categoryProducts.map((p) => p.brand).filter(Boolean))
+  );
+
+  const categoryColors = Array.from(
+    new Set(categoryProducts.flatMap((p) => p.colors || []).filter(Boolean))
+  );
+
+  const filtered = categoryProducts.filter((p) => {
     // Seat filter
     let seatMatch = true;
-    if (seatFilter === "2 Seats") seatMatch = p.seats === 2;
-    else if (seatFilter === "4 Seats") seatMatch = p.seats === 4;
-    else if (seatFilter === "6 Seats") seatMatch = p.seats === 6;
-    else if (seatFilter === "8 Seats") seatMatch = p.seats >= 8;
+    if (categoryFilter === "Golf Carts") {
+      if (seatFilter === "2 Seats") seatMatch = p.seats === 2;
+      else if (seatFilter === "4 Seats") seatMatch = p.seats === 4;
+      else if (seatFilter === "6 Seats") seatMatch = p.seats === 6;
+      else if (seatFilter === "8 Seats") seatMatch = p.seats >= 8;
+    }
 
     // Make filter (Case-Insensitive Match)
-    const makeMatch = makeFilter === "All" || 
-                     (p.brand && p.brand.toLowerCase() === makeFilter.toLowerCase());
+    const makeMatch =
+      makeFilter === "All" ||
+      (p.brand && p.brand.toLowerCase() === makeFilter.toLowerCase());
 
     // Color filter
     const colorMatch =
       colorFilter === "All" ||
       (p.colors &&
-        p.colors.some((c) => c.toLowerCase().includes(colorFilter.toLowerCase())));
+        p.colors.some((c) =>
+          c.toLowerCase().includes(colorFilter.toLowerCase())
+        ));
 
     return seatMatch && makeMatch && colorMatch;
   });
+
+  const handleCategoryChange = (cat) => {
+    setCategoryFilter(cat);
+    // Reset filters when category changes
+    setSeatFilter("All");
+    setMakeFilter("All");
+    setColorFilter("All");
+  };
 
   return (
     <div className="pt-24 pb-16">
@@ -95,14 +127,56 @@ function ShopContent() {
           description="Browse our full selection of new electric golf carts and street-legal LSVs from top brands."
         />
 
+        {/* Hero Buttons */}
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-10 mt-6">
+          <a
+            href="tel:6037777831"
+            className="flex items-center justify-center gap-2 px-8 py-3.5 bg-accent hover:bg-accent/90 text-white font-bold rounded-xl shadow-lg transition-all hover:scale-105 w-full sm:w-auto min-w-[240px] group"
+          >
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
+              <Phone className="w-4 h-4 fill-current" />
+            </div>
+            <span className="text-base">Call us to Buy Today</span>
+          </a>
+          <button
+            onClick={() =>
+              window.dispatchEvent(new CustomEvent("open-ai-chat"))
+            }
+            className="flex items-center justify-center gap-2 px-8 py-3.5 bg-[#1a1a2e] hover:bg-[#2d2d4e] text-white font-bold rounded-xl border border-white/10 shadow-lg transition-all hover:scale-105 w-full sm:w-auto min-w-[240px] group"
+          >
+            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+              <span className="text-xl">🤖</span>
+            </div>
+            <span className="text-base">Find My Cart with AI</span>
+          </button>
+        </div>
+
+        {/* Category Selection */}
+        <div className="flex justify-center gap-4 mb-8">
+          {["Golf Carts", "Accessories"].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => handleCategoryChange(cat)}
+              className={`px-8 py-2.5 rounded-full font-semibold transition-all duration-300 shadow-sm border ${categoryFilter === cat
+                ? "bg-accent  text-white border-accent scale-105"
+                : "bg-white text-muted-foreground border-border hover:border-accent hover:text-accent"
+                }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
         <ShopFilterBar
-          brands={brands}
+          brands={categoryBrands}
           seatFilter={seatFilter}
           setSeatFilter={setSeatFilter}
           makeFilter={makeFilter}
           setMakeFilter={setMakeFilter}
           colorFilter={colorFilter}
           setColorFilter={setColorFilter}
+          colorOptions={categoryColors}
+          category={categoryFilter}
           count={filtered.length}
         />
 
