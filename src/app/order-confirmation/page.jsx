@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   CheckCircle,
   ShoppingBag,
@@ -17,6 +17,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 function OrderDetails() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
 
@@ -24,6 +25,7 @@ function OrderDetails() {
   const [fallbackOrder, setFallbackOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     // Try loading from sessionStorage first (as fallback)
@@ -41,31 +43,53 @@ function OrderDetails() {
       /* ignore */
     }
 
-    // If we have an orderId from Wix, fetch the full order
-    if (orderId) {
-      fetch(`/api/orders/${orderId}`)
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.order) {
-            setOrder(data.order);
-          } else {
-            setError(true);
-          }
-        })
-        .catch(() => setError(true))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+    if (!orderId) {
+      setRedirecting(true);
+      router.replace("/");
+      return;
     }
-  }, [orderId]);
+
+    // If we have an orderId from Wix, fetch the full order
+    fetch(`/api/orders/${orderId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.order) {
+          setOrder(data.order);
+        } else {
+          setError(true);
+        }
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [orderId, router]);
+
+  useEffect(() => {
+    // If the API failed to fetch the order and we don't have a fallback, redirect home.
+    if (error && !fallbackOrder && !loading) {
+      setRedirecting(true);
+      router.replace("/");
+    }
+  }, [error, fallbackOrder, loading, router]);
 
   // Decide what to display
   const hasOrderData = order || fallbackOrder;
 
+  if (redirecting || (loading && !hasOrderData)) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center pt-24 pb-16 px-4">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+        <p className="mt-4 text-muted-foreground animate-pulse text-sm">
+          {redirecting ? "Redirecting..." : "Loading order details..."}
+        </p>
+      </div>
+    );
+  }
+
   // Extract line items from Wix order
   const lineItems = order?.lineItems || [];
   const priceSummary = order?.priceSummary;
-  const shippingAddress = order?.shippingInfo?.logistics?.shippingDestination?.address;
+  const shippingAddress =
+    order?.shippingInfo?.logistics?.shippingDestination?.address;
   const billingAddress = order?.billingInfo?.address;
   const displayAddress = shippingAddress || billingAddress;
   const buyerEmail = order?.buyerInfo?.email;
@@ -121,264 +145,255 @@ function OrderDetails() {
       </motion.div>
 
       {/* Order Details */}
-      {loading ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="mt-6 flex items-center gap-2 text-muted-foreground"
-        >
-          <Loader2 className="w-5 h-5 animate-spin" />
-          <span className="text-sm">Loading order details...</span>
-        </motion.div>
-      ) : hasOrderData ? (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="max-w-2xl w-full mt-6 space-y-4"
-        >
-          {/* Order Meta Info */}
-          {(orderDate || orderId) && (
-            <div className="bg-card border border-border rounded-2xl p-5 flex flex-wrap gap-4">
-              {orderNumber && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Hash className="w-4 h-4 text-accent" />
-                  <span className="text-muted-foreground">Order :</span>
-                  <span className="font-mono text-xs text-foreground break-all">
-                    {orderNumber}
-                  </span>
-                </div>
-              )}
-              {orderDate && (
-                <div className="flex items-center gap-2 text-sm ml-auto">
-                  <Calendar className="w-4 h-4 text-accent" />
-                  <span className="text-muted-foreground">
-                    {formatDate(orderDate)}
-                  </span>
-                </div>
-              )}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="max-w-2xl w-full mt-6 space-y-4"
+      >
+        {/* Order Meta Info */}
+        {(orderDate || orderId) && (
+          <div className="bg-card border border-border rounded-2xl p-5 flex flex-wrap gap-4">
+            {orderNumber && (
+              <div className="flex items-center gap-2 text-sm">
+                <Hash className="w-4 h-4 text-accent" />
+                <span className="text-muted-foreground">Order :</span>
+                <span className="font-mono text-xs text-foreground break-all">
+                  {orderNumber}
+                </span>
+              </div>
+            )}
+            {orderDate && (
+              <div className="flex items-center gap-2 text-sm ml-auto">
+                <Calendar className="w-4 h-4 text-accent" />
+                <span className="text-muted-foreground">
+                  {formatDate(orderDate)}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Line Items from Wix */}
+        {lineItems.length > 0 && (
+          <div className="bg-card border border-border rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+              <Package className="w-4 h-4 text-accent" />
+              <h2 className="font-semibold text-sm">Items Ordered</h2>
             </div>
-          )}
+            <div className="divide-y divide-border">
+              {lineItems.map((item, index) => {
+                const imgUrl =
+                  item.image?.url ||
+                  item.mediaItem?.url ||
+                  item.productName?.image;
+                const name =
+                  item.productName?.translated ||
+                  item.productName?.original ||
+                  item.productName ||
+                  "Product";
+                const qty = item.quantity || 1;
+                const price =
+                  item.price?.formattedAmount ||
+                  item.priceBeforeDiscounts?.formattedAmount ||
+                  item.price?.amount;
+                const totalPrice =
+                  item.totalPriceAfterTax?.formattedAmount ||
+                  item.totalPriceBeforeTax?.formattedAmount;
+                const options = item.descriptionLines || [];
 
-          {/* Line Items from Wix */}
-          {lineItems.length > 0 && (
-            <div className="bg-card border border-border rounded-2xl overflow-hidden">
-              <div className="px-5 py-4 border-b border-border flex items-center gap-2">
-                <Package className="w-4 h-4 text-accent" />
-                <h2 className="font-semibold text-sm">Items Ordered</h2>
-              </div>
-              <div className="divide-y divide-border">
-                {lineItems.map((item, index) => {
-                  const imgUrl =
-                    item.image?.url ||
-                    item.mediaItem?.url ||
-                    item.productName?.image;
-                  const name =
-                    item.productName?.translated ||
-                    item.productName?.original ||
-                    item.productName ||
-                    "Product";
-                  const qty = item.quantity || 1;
-                  const price =
-                    item.price?.formattedAmount ||
-                    item.priceBeforeDiscounts?.formattedAmount ||
-                    item.price?.amount;
-                  const totalPrice =
-                    item.totalPriceAfterTax?.formattedAmount ||
-                    item.totalPriceBeforeTax?.formattedAmount;
-                  const options = item.descriptionLines || [];
-
-                  return (
-                    <div
-                      key={item._id || index}
-                      className="flex items-start gap-4 p-5"
-                    >
-                      {imgUrl && (
-                        <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted shrink-0">
-                          <img
-                            src={imgUrl}
-                            alt={typeof name === "string" ? name : "Product"}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-foreground truncate">
-                          {typeof name === "string" ? name : "Product"}
-                        </p>
-                        {options.length > 0 && (
-                          <div className="mt-1 space-y-0.5">
-                            {options.map((opt, i) => (
-                              <p
-                                key={i}
-                                className="text-xs text-muted-foreground"
-                              >
-                                {opt.name?.translated || opt.name?.original || opt.name}:{" "}
-                                <span className="text-foreground">
-                                  {opt.plainText?.translated ||
-                                    opt.plainText?.original ||
-                                    opt.colorInfo?.translated ||
-                                    opt.colorInfo?.original ||
-                                    ""}
-                                </span>
-                              </p>
-                            ))}
-                          </div>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Qty: {qty}
-                          {price && <span className="ml-2">@ {price}</span>}
-                        </p>
-                      </div>
-                      {totalPrice && (
-                        <p className="font-semibold text-sm text-foreground shrink-0">
-                          {totalPrice}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Fallback: Show from sessionStorage if no Wix order items */}
-          {lineItems.length === 0 && fallbackOrder && (
-            <div className="bg-card border border-border rounded-2xl overflow-hidden">
-              <div className="px-5 py-4 border-b border-border flex items-center gap-2">
-                <Package className="w-4 h-4 text-accent" />
-                <h2 className="font-semibold text-sm">Items Ordered</h2>
-              </div>
-              <div className="flex items-start gap-4 p-5">
-                {fallbackOrder.productImage && (
-                  <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted shrink-0">
-                    <img
-                      src={fallbackOrder.productImage}
-                      alt={fallbackOrder.productName}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-foreground truncate">
-                    {fallbackOrder.productName}
-                  </p>
-                  {fallbackOrder.options &&
-                    Object.keys(fallbackOrder.options).length > 0 && (
-                      <div className="mt-1 space-y-0.5">
-                        {Object.entries(fallbackOrder.options).map(
-                          ([key, val]) => (
-                            <p
-                              key={key}
-                              className="text-xs text-muted-foreground"
-                            >
-                              {key}:{" "}
-                              <span className="text-foreground">{val}</span>
-                            </p>
-                          )
-                        )}
+                return (
+                  <div
+                    key={item._id || index}
+                    className="flex items-start gap-4 p-5"
+                  >
+                    {imgUrl && (
+                      <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted shrink-0">
+                        <img
+                          src={imgUrl}
+                          alt={typeof name === "string" ? name : "Product"}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     )}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Qty: {fallbackOrder.quantity || 1}
-                  </p>
-                </div>
-                {fallbackOrder.productPrice && (
-                  <p className="font-semibold text-sm text-foreground shrink-0">
-                    {typeof fallbackOrder.productPrice === "string"
-                      ? fallbackOrder.productPrice
-                      : `$${Number(fallbackOrder.productPrice).toLocaleString()}`}
-                  </p>
-                )}
-              </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-foreground truncate">
+                        {typeof name === "string" ? name : "Product"}
+                      </p>
+                      {options.length > 0 && (
+                        <div className="mt-1 space-y-0.5">
+                          {options.map((opt, i) => (
+                            <p
+                              key={i}
+                              className="text-xs text-muted-foreground"
+                            >
+                              {opt.name?.translated ||
+                                opt.name?.original ||
+                                opt.name}
+                              :{" "}
+                              <span className="text-foreground">
+                                {opt.plainText?.translated ||
+                                  opt.plainText?.original ||
+                                  opt.colorInfo?.translated ||
+                                  opt.colorInfo?.original ||
+                                  ""}
+                              </span>
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Qty: {qty}
+                        {price && <span className="ml-2">@ {price}</span>}
+                      </p>
+                    </div>
+                    {totalPrice && (
+                      <p className="font-semibold text-sm text-foreground shrink-0">
+                        {totalPrice}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Price Summary */}
-          {priceSummary && (
-            <div className="bg-card border border-border rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <CreditCard className="w-4 h-4 text-accent" />
-                <h2 className="font-semibold text-sm">Payment Summary</h2>
-              </div>
-              <div className="space-y-2">
-                {priceSummary.subtotal?.formattedAmount && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span>{priceSummary.subtotal.formattedAmount}</span>
-                  </div>
-                )}
-                {priceSummary.shipping?.formattedAmount && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span>{priceSummary.shipping.formattedAmount}</span>
-                  </div>
-                )}
-                {priceSummary.tax?.formattedAmount && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Tax</span>
-                    <span>{priceSummary.tax.formattedAmount}</span>
-                  </div>
-                )}
-                {priceSummary.discount?.formattedAmount &&
-                  priceSummary.discount.amount !== "0" && (
-                    <div className="flex justify-between text-sm text-green-500">
-                      <span>Discount</span>
-                      <span>-{priceSummary.discount.formattedAmount}</span>
+        {/* Fallback: Show from sessionStorage if no Wix order items */}
+        {lineItems.length === 0 && fallbackOrder && (
+          <div className="bg-card border border-border rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border flex items-center gap-2">
+              <Package className="w-4 h-4 text-accent" />
+              <h2 className="font-semibold text-sm">Items Ordered</h2>
+            </div>
+            <div className="flex items-start gap-4 p-5">
+              {fallbackOrder.productImage && (
+                <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted shrink-0">
+                  <img
+                    src={fallbackOrder.productImage}
+                    alt={fallbackOrder.productName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm text-foreground truncate">
+                  {fallbackOrder.productName}
+                </p>
+                {fallbackOrder.options &&
+                  Object.keys(fallbackOrder.options).length > 0 && (
+                    <div className="mt-1 space-y-0.5">
+                      {Object.entries(fallbackOrder.options).map(
+                        ([key, val]) => (
+                          <p
+                            key={key}
+                            className="text-xs text-muted-foreground"
+                          >
+                            {key}:{" "}
+                            <span className="text-foreground">{val}</span>
+                          </p>
+                        ),
+                      )}
                     </div>
                   )}
-                <div className="border-t border-border pt-2 mt-2">
-                  <div className="flex justify-between font-bold">
-                    <span>Total</span>
-                    <span className="text-lg">
-                      {priceSummary.total?.formattedAmount || "—"}
-                    </span>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Qty: {fallbackOrder.quantity || 1}
+                </p>
+              </div>
+              {fallbackOrder.productPrice && (
+                <p className="font-semibold text-sm text-foreground shrink-0">
+                  {typeof fallbackOrder.productPrice === "string" ?
+                    fallbackOrder.productPrice
+                  : `$${Number(fallbackOrder.productPrice).toLocaleString()}`}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Price Summary */}
+        {priceSummary && (
+          <div className="bg-card border border-border rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <CreditCard className="w-4 h-4 text-accent" />
+              <h2 className="font-semibold text-sm">Payment Summary</h2>
+            </div>
+            <div className="space-y-2">
+              {priceSummary.subtotal?.formattedAmount && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span>{priceSummary.subtotal.formattedAmount}</span>
+                </div>
+              )}
+              {priceSummary.shipping?.formattedAmount && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Shipping</span>
+                  <span>{priceSummary.shipping.formattedAmount}</span>
+                </div>
+              )}
+              {priceSummary.tax?.formattedAmount && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Tax</span>
+                  <span>{priceSummary.tax.formattedAmount}</span>
+                </div>
+              )}
+              {priceSummary.discount?.formattedAmount &&
+                priceSummary.discount.amount !== "0" && (
+                  <div className="flex justify-between text-sm text-green-500">
+                    <span>Discount</span>
+                    <span>-{priceSummary.discount.formattedAmount}</span>
                   </div>
+                )}
+              <div className="border-t border-border pt-2 mt-2">
+                <div className="flex justify-between font-bold">
+                  <span>Total</span>
+                  <span className="text-lg">
+                    {priceSummary.total?.formattedAmount || "—"}
+                  </span>
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Shipping Address */}
-          {displayAddress && (
-            <div className="bg-card border border-border rounded-2xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <MapPin className="w-4 h-4 text-accent" />
-                <h2 className="font-semibold text-sm">
-                  {shippingAddress ? "Shipping Address" : "Billing Address"}
-                </h2>
-              </div>
-              <div className="text-sm text-muted-foreground space-y-0.5">
-                {(displayAddress.fullName?.firstName ||
-                  displayAddress.fullName?.lastName) && (
-                  <p className="text-foreground font-medium">
-                    {displayAddress.fullName.firstName}{" "}
-                    {displayAddress.fullName.lastName}
-                  </p>
-                )}
-                {displayAddress.addressLine1 && (
-                  <p>{displayAddress.addressLine1}</p>
-                )}
-                {displayAddress.addressLine2 && (
-                  <p>{displayAddress.addressLine2}</p>
-                )}
-                {(displayAddress.city ||
-                  displayAddress.subdivision ||
-                  displayAddress.postalCode) && (
-                  <p>
-                    {displayAddress.city}
-                    {displayAddress.subdivision &&
-                      `, ${displayAddress.subdivision}`}
-                    {displayAddress.postalCode &&
-                      ` ${displayAddress.postalCode}`}
-                  </p>
-                )}
-                {displayAddress.country && <p>{displayAddress.country}</p>}
-              </div>
+        {/* Shipping Address */}
+        {displayAddress && (
+          <div className="bg-card border border-border rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <MapPin className="w-4 h-4 text-accent" />
+              <h2 className="font-semibold text-sm">
+                {shippingAddress ? "Shipping Address" : "Billing Address"}
+              </h2>
             </div>
-          )}
-        </motion.div>
-      ) : null}
+            <div className="text-sm text-muted-foreground space-y-0.5">
+              {(displayAddress.fullName?.firstName ||
+                displayAddress.fullName?.lastName) && (
+                <p className="text-foreground font-medium">
+                  {displayAddress.fullName.firstName}{" "}
+                  {displayAddress.fullName.lastName}
+                </p>
+              )}
+              {displayAddress.addressLine1 && (
+                <p>{displayAddress.addressLine1}</p>
+              )}
+              {displayAddress.addressLine2 && (
+                <p>{displayAddress.addressLine2}</p>
+              )}
+              {(displayAddress.city ||
+                displayAddress.subdivision ||
+                displayAddress.postalCode) && (
+                <p>
+                  {displayAddress.city}
+                  {displayAddress.subdivision &&
+                    `, ${displayAddress.subdivision}`}
+                  {displayAddress.postalCode && ` ${displayAddress.postalCode}`}
+                </p>
+              )}
+              {displayAddress.country && <p>{displayAddress.country}</p>}
+            </div>
+          </div>
+        )}
+      </motion.div>
 
       {/* Action Buttons */}
       <motion.div
