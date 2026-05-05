@@ -217,16 +217,18 @@ export default function ProductDetail() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <p className="text-xs text-accent uppercase tracking-[0.2em] font-semibold mb-2">
-              {cart.brand}
-            </p>
+            {!cart.isAccessory && cart.brand && (
+              <p className="text-xs text-accent uppercase tracking-[0.2em] font-semibold mb-2">
+                {cart.brand}
+              </p>
+            )}
             <h1 className="font-display font-bold text-3xl sm:text-4xl mb-3">{cart.name}</h1>
             <div className="text-3xl font-bold text-foreground mb-4">
               {cart.formattedPrice || "Call for Price"}
             </div>
 
-            {/* Financing Badge */}
-            {(() => {
+            {/* Financing Badge — hidden for accessories */}
+            {!cart.isAccessory && (() => {
               let partner = "Sheffield Financial"; // Default
               const brandLower = cart.brand?.toLowerCase() || "";
               
