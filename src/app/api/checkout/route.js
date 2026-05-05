@@ -178,7 +178,7 @@ export async function POST(req) {
     };
 
     // Use env variable for redirects
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://www.snhgolfcarts.com";
+    const origin = "https://www.snhgolfcarts.com";
     
     // Add thank you page URL to the checkout itself for better support in some flows
     checkoutPayload.thankyouPageUrl = `${origin}/order-confirmation`;
