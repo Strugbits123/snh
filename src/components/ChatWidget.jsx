@@ -1,6 +1,22 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { wixClient } from "@/lib/wixClient";
+
+// Strip markdown formatting from bot replies
+function stripMarkdown(text) {
+  return text
+    .replace(/^#{1,6}\s+/gm, "")        // headers
+    .replace(/\*\*(.+?)\*\*/g, "$1")     // **bold**
+    .replace(/\*(.+?)\*/g, "$1")         // *italic*
+    .replace(/__(.+?)__/g, "$1")         // __bold__
+    .replace(/_(.+?)_/g, "$1")           // _italic_
+    .replace(/~~(.+?)~~/g, "$1")         // ~~strikethrough~~
+    .replace(/^[-*+]\s+/gm, "• ")       // bullet lists
+    .replace(/^\d+\.\s+/gm, "")         // numbered lists prefix cleanup
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // [text](url) -> text
+    .replace(/`([^`]+)`/g, "$1")         // inline code
+    .replace(/\n{3,}/g, "\n\n");          // collapse excess newlines
+}
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -45,14 +61,16 @@ export default function ChatWidget() {
       const reply = data.reply || "I am currently undergoing upgrades for Next.js!";
       setHistory((h) => [...h, { role: "assistant", content: reply }]);
 
-      // Parse PRODUCTS_JSON if present
-      const productMatch = reply.match(/PRODUCTS_JSON:(\[.*?\])/s);
+      // Parse PRODUCTS_JSON if present — use greedy match to capture the full JSON array
+      const productMatch = reply.match(/PRODUCTS_JSON:(\[.*\])/s);
       let products = [];
       let cleanText = reply;
       if (productMatch) {
         try { products = JSON.parse(productMatch[1]); } catch(e) {}
-        cleanText = reply.replace(/PRODUCTS_JSON:\[.*?\]/s, "").trim();
+        cleanText = reply.replace(/PRODUCTS_JSON:\[.*\]/s, "").trim();
       }
+      // Strip markdown formatting for clean display
+      cleanText = stripMarkdown(cleanText);
       setMessages((m) => [...m, { role: "bot", text: cleanText, products }]);
     } catch {
       setMessages((m) => [...m, { role: "bot", text: "Connection error. Please try again.", products: [] }]);

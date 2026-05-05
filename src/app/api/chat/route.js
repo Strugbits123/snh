@@ -28,6 +28,8 @@ export async function POST(req) {
 Your goal is to help customers find the perfect golf cart.
 Be friendly, professional, and concise.
 
+IMPORTANT: Do NOT use any markdown formatting in your responses. No bold (**), no italic (*), no headers (#), no bullet points (- or *). Write in plain conversational text only. Use line breaks to separate sections.
+
 Available Products:
 ${JSON.stringify(products, null, 2)}
 
@@ -39,7 +41,7 @@ If no products are relevant, still explain why but keep the conversation helpful
 
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-5",
-      max_tokens: 300,
+      max_tokens: 1024,
       system: systemPrompt,
       messages: messages.map((m) => ({
         role: m.role === "bot" ? "assistant" : m.role,
