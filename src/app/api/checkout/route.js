@@ -177,6 +177,12 @@ export async function POST(req) {
       channelType: "WEB",
     };
 
+    // Use the site's origin for redirects
+    const origin = "https://www.snhgolfcarts.com";
+    
+    // Add thank you page URL to the checkout itself for better support in some flows
+    checkoutPayload.thankyouPageUrl = `${origin}/order-confirmation`;
+
     console.log("Wix API Request Body==>", JSON.stringify(checkoutPayload, null, 2));
 
 
@@ -231,13 +237,12 @@ export async function POST(req) {
 
     const { wixClient } = await import("@/lib/wixClient");
 
-    const origin = req.nextUrl?.origin || process.env.NEXT_PUBLIC_SITE_URL || "https://www.snhgolfcarts.com";
-
     try {
       const redirectSession = await wixClient.redirects.createRedirectSession({
         ecomCheckout: { checkoutId },
         callbacks: {
           postFlowUrl: `${origin}/order-confirmation`,
+          thankYouPageUrl: `${origin}/order-confirmation`,
         },
       });
 

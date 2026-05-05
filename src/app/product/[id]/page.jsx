@@ -92,6 +92,18 @@ export default function ProductDetail() {
       });
       const data = await res.json();
       if (data.checkoutUrl) {
+        // Save order details to sessionStorage for the confirmation page
+        try {
+          sessionStorage.setItem("snh_pending_order", JSON.stringify({
+            productName: `${cart.brand?.toUpperCase() || ""} ${cart.name}`,
+            productImage: cart.image,
+            productPrice: cart.formattedPrice || cart.price,
+            quantity: 1,
+            options: selectedOptions,
+            checkoutId: data.checkoutId,
+            timestamp: Date.now(),
+          }));
+        } catch (e) { /* ignore storage errors */ }
         window.location.href = data.checkoutUrl;
       } else {
         alert("Unable to start checkout. Please call us or try again.");

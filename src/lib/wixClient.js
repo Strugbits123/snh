@@ -1,7 +1,7 @@
 import { createClient, ApiKeyStrategy, OAuthStrategy } from '@wix/sdk';
 import { products, collections } from '@wix/stores';
 import { posts } from '@wix/blog';
-import { checkout } from '@wix/ecom';
+import { checkout, orders } from '@wix/ecom';
 import { contacts } from '@wix/crm';
 import { submissions } from '@wix/forms';
 import { items } from '@wix/data';
@@ -19,6 +19,7 @@ export const wixClient = createClient({
     collections,
     posts,
     checkout,
+    orders,
     contacts,
     submissions,
     items,
