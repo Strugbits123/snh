@@ -265,7 +265,42 @@ export async function POST(req) {
     } catch (redirectErr) {
       console.error("Redirect Session SDK Error:", redirectErr.message || redirectErr);
 
-      // Fallback: return the checkout-url endpoint result (will be on site domain)
+      const thankYouUrl = `${origin}/order-confirmation`;
+
+      // Fallback 1: Try REST API redirect session
+      try {
+        const redirectRes = await fetch(
+          "https://www.wixapis.com/redirects-api/v1/redirect-session",
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              ecomCheckout: { checkoutId },
+              callbacks: {
+                postFlowUrl: thankYouUrl,
+                thankYouPageUrl: thankYouUrl,
+              },
+            }),
+          }
+        );
+
+        if (redirectRes.ok) {
+          const redirectData = await redirectRes.json();
+          const fullUrl = redirectData.redirectSession?.fullUrl;
+          console.log("Fallback REST redirect URL==>", fullUrl);
+          if (fullUrl) {
+            return NextResponse.json({
+              success: true,
+              checkoutUrl: fullUrl,
+              checkoutId,
+            });
+          }
+        }
+      } catch (restRedirectErr) {
+        console.error("REST redirect session failed:", restRedirectErr.message);
+      }
+
+      // Fallback 2: Use checkout-url endpoint (Wix's own hosted page)
       const urlResponse = await fetch(
         `https://www.wixapis.com/ecom/v1/checkouts/${checkoutId}/checkout-url`,
         { method: "GET", headers }
