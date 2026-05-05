@@ -135,7 +135,7 @@ export default function ChatWidget() {
           }}>🛒</div>
           <div style={{ flex: 1 }}>
             <p style={{ color: "#fff", fontWeight: 500, fontSize: 14, margin: 0 }}>AI Cart Finder</p>
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, margin: 0 }}>Powered by Claude · SNH Golf Carts LLC</p>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, margin: 0 }}>SNH Golf Carts LLC</p>
           </div>
           <button onClick={closeChat} style={{
             background: "none", border: "none", color: "rgba(255,255,255,0.5)",
@@ -156,7 +156,7 @@ export default function ChatWidget() {
                     padding: "10px 14px", borderRadius: 14, fontSize: 13.5, lineHeight: 1.5,
                     background: "#1e1e36", color: "rgba(255,255,255,0.9)", borderBottomLeftRadius: 4,
                   }}>
-                    Hey there! I'm SNH's AI cart finder, powered by Claude.<br /><br />
+                    Hey there! I'm SNH's AI cart finder<br /><br />
                     I can help you find the perfect golf cart in about 60 seconds.<br /><br />
                     Want to start?
                   </div>
@@ -268,9 +268,6 @@ export default function ChatWidget() {
           </button>
         </div>
 
-        <div style={{ textAlign: "center", fontSize: 10, color: "rgba(255,255,255,0.2)", padding: "4px 0 8px" }}>
-          Powered by Claude AI
-        </div>
       </div>
 
       <style>{`
