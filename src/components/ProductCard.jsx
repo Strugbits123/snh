@@ -7,9 +7,9 @@ import { motion } from "framer-motion";
 import { extractProductDetails } from "@/lib/utils";
 
 export default function ProductCard({ cart: inputCart, index = 0 }) {
+  const cart =
+    "isAccessory" in inputCart ? inputCart : extractProductDetails(inputCart);
 
-  const cart = inputCart.brand ? inputCart : extractProductDetails(inputCart);
-  
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -49,7 +49,7 @@ export default function ProductCard({ cart: inputCart, index = 0 }) {
             </div>
           </div>
 
-          <div 
+          <div
             className="text-sm text-muted-foreground line-clamp-2 mb-4"
             dangerouslySetInnerHTML={{ __html: cart.description }}
           />
