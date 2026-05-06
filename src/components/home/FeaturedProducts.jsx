@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2 } from "lucide-react";
 import SectionHeading from "../SectionHeading";
 import ProductCard from "../ProductCard";
+import { extractProductDetails } from "@/lib/utils";
 
 export default function FeaturedProducts() {
   const [carts, setCarts] = useState([]);
@@ -15,8 +16,12 @@ export default function FeaturedProducts() {
     fetch("/api/products")
       .then((r) => r.json())
       .then((res) => {
-        const all = res._items || [];
-        const inStock = all.filter(item => item.stock?.inventoryStatus !== "OUT_OF_STOCK");
+        const rawItems = res.products || [];
+        const collections = res.collections || [];
+        
+        const processed = rawItems.map(item => extractProductDetails(item, collections));
+        const inStock = processed.filter(item => item.inStock);
+        
         setCarts(inStock.slice(0, 3));
       })
       .catch((err) => console.error("Error fetching products:", err))
@@ -43,9 +48,9 @@ export default function FeaturedProducts() {
             <Loader2 className="w-8 h-8 animate-spin text-accent" />
           </div>
         : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {carts.map((cart, i) => (
-              <ProductCard key={cart._id} cart={cart} index={i} />
-            ))}
+              {carts.map((cart, i) => (
+                <ProductCard key={cart.id} cart={cart} index={i} />
+              ))}
           </div>
         }
 

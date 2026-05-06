@@ -27,7 +27,7 @@ export default function ProductCard({ cart: inputCart, index = 0 }) {
           <img
             src={cart.image}
             alt={cart.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            className="w-full h-full object-contain group-hover:scale-100 transition-transform duration-700"
           />
           <div className="absolute top-4 left-4 flex gap-2">
             {!cart.inStock && (

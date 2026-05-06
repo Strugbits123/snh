@@ -186,15 +186,10 @@ export async function POST(req) {
       resolvedLineItems.push(lineItem);
     }
     // === WAIVER PDF HANDLING ===
-    let buyerNote = "";
+
     let customFields = [];
     console.log("Waiver PDF URL==>", waiverPdfUrl);
     if (waiverPdfUrl) {
-      buyerNote = `Modification Waiver PDF: ${waiverPdfUrl}`;
-      if (waiverCustomerName) {
-        buyerNote += `\nCustomer: ${waiverCustomerName}`;
-      }
-
       customFields = [
         {
           title: "Waiver PDF",
@@ -275,17 +270,16 @@ export async function POST(req) {
             headers,
             body: JSON.stringify({
               checkout: {
-                buyerNote: buyerNote,
-                customFields: customFields
-              }
+                customFields: customFields,
+              },
             }),
-          }
+          },
         );
         if (!updateRes.ok) {
           const updateData = await updateRes.text();
           console.error("Wix Update Checkout Error:", updateData);
         } else {
-          console.log("Successfully updated checkout with buyer note and custom fields");
+          console.log("Successfully updated checkout with custom fields");
         }
       } catch (err) {
         console.error("Failed to update checkout with waiver:", err);

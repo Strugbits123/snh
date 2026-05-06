@@ -58,6 +58,12 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
   const updateField = useCallback((field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
+
+    // Auto-populate first name when full name is typed
+    if (field === "fullName") {
+      const firstName = value.trim().split(/\s+/)[0] || "";
+      setInitials(new Array(6).fill(firstName));
+    }
   }, []);
 
   const validateStep0 = () => {
