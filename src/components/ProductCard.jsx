@@ -7,9 +7,7 @@ import { motion } from "framer-motion";
 import { extractProductDetails } from "@/lib/utils";
 
 export default function ProductCard({ cart: inputCart, index = 0 }) {
-  // If it has a 'brand' property and it's NOT a raw Wix object (which wouldn't have brand usually), 
-  // or if it's already been processed.
-  // Wix raw products usually have '_id' and 'name' but not 'brand', 'seats', etc.
+
   const cart = inputCart.brand ? inputCart : extractProductDetails(inputCart);
   
   return (
@@ -43,7 +41,7 @@ export default function ProductCard({ cart: inputCart, index = 0 }) {
           <div className="flex items-start justify-between gap-4 mb-3">
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-                {cart.brand}
+                {cart.isAccessory ? "Accessory" : cart.brand}
               </p>
               <h3 className="font-display font-bold text-lg text-foreground group-hover:text-accent transition-colors">
                 {cart.name}

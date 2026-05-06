@@ -1,6 +1,15 @@
 "use client";
 import { useState, useRef, useCallback } from "react";
-import { Shield, ChevronRight, ChevronLeft, Upload, CheckCircle2, AlertTriangle, X, Loader2 } from "lucide-react";
+import {
+  Shield,
+  ChevronRight,
+  ChevronLeft,
+  Upload,
+  CheckCircle2,
+  AlertTriangle,
+  X,
+  Loader2,
+} from "lucide-react";
 
 const LEGAL_TERMS = [
   {
@@ -35,7 +44,13 @@ const LEGAL_TERMS = [
   },
 ];
 
-export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeModel, isSubmitting }) {
+export default function WaiverModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  vehicleMakeModel,
+  isSubmitting,
+}) {
   const [step, setStep] = useState(0); // 0 = info, 1-6 = terms, 7 = final
   const [formData, setFormData] = useState({
     fullName: "",
@@ -53,7 +68,10 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
   const fileInputRef = useRef(null);
 
   const totalSteps = 8; // 1 info + 6 terms + 1 final
-  const progressSegment = step < 1 ? 0 : step <= 6 ? 1 : 2; // 0=info, 1=terms, 2=final
+  const progressSegment =
+    step < 1 ? 0
+    : step <= 6 ? 1
+    : 2; // 0=info, 1=terms, 2=final
 
   const updateField = useCallback((field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -62,7 +80,7 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
     // Auto-populate first name when full name is typed
     if (field === "fullName") {
       const firstName = value.trim().split(/\s+/)[0] || "";
-      setInitials(new Array(6).fill(firstName));
+      setInitials(new Array(21).fill(firstName));
     }
   }, []);
 
@@ -98,12 +116,24 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
 
   const handleSignatureChange = (e) => {
     const file = e.target.files?.[0];
-    if (file && (file.type === "image/png" || file.type === "image/jpeg" || file.type === "image/jpg")) {
+    if (!file) return;
+
+    if (
+      file.type === "image/png" ||
+      file.type === "image/jpeg" ||
+      file.type === "image/jpg"
+    ) {
       setSignatureFile(file);
       const reader = new FileReader();
       reader.onload = (ev) => setSignaturePreview(ev.target.result);
       reader.readAsDataURL(file);
       setErrors({});
+    } else {
+      setErrors({
+        signature: "File type not supported. Please upload PNG, JPG or JPEG.",
+      });
+      setSignatureFile(null);
+      setSignaturePreview(null);
     }
   };
 
@@ -143,7 +173,9 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
         backdropFilter: "blur(6px)",
         padding: 16,
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         style={{
@@ -165,21 +197,55 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
           <button
             onClick={onClose}
             style={{
-              position: "absolute", top: 16, right: 16, background: "none",
-              border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer",
-              padding: 4, lineHeight: 1,
+              position: "absolute",
+              top: 16,
+              right: 16,
+              background: "none",
+              border: "none",
+              color: "rgba(255,255,255,0.4)",
+              cursor: "pointer",
+              padding: 4,
+              lineHeight: 1,
             }}
           >
             <X size={18} />
           </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 8,
+            }}
+          >
             <Shield size={16} style={{ color: "#00bfff" }} />
-            <span style={{ color: "#00bfff", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em" }}>
+            <span
+              style={{
+                color: "#00bfff",
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.15em",
+              }}
+            >
               Safety & Legal
             </span>
           </div>
-          <h2 style={{ color: "#fff", fontSize: 24, fontWeight: 700, margin: "0 0 4px" }}>Modification Waiver</h2>
-          <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, margin: 0 }}>Programming & Speed Modification Agreement</p>
+          <h2
+            style={{
+              color: "#fff",
+              fontSize: 24,
+              fontWeight: 700,
+              margin: "0 0 4px",
+            }}
+          >
+            Modification Waiver
+          </h2>
+          <p
+            style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, margin: 0 }}
+          >
+            Programming & Speed Modification Agreement
+          </p>
 
           {/* Progress bar */}
           <div style={{ display: "flex", gap: 6, marginTop: 16 }}>
@@ -190,7 +256,10 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
                   flex: 1,
                   height: 3,
                   borderRadius: 2,
-                  background: seg <= progressSegment ? "#00bfff" : "rgba(255,255,255,0.12)",
+                  background:
+                    seg <= progressSegment ? "#00bfff" : (
+                      "rgba(255,255,255,0.12)"
+                    ),
                   transition: "background 0.3s",
                 }}
               />
@@ -200,7 +269,13 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
 
         {/* Content */}
         <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
-          {step === 0 && <StepInfo formData={formData} updateField={updateField} errors={errors} />}
+          {step === 0 && (
+            <StepInfo
+              formData={formData}
+              updateField={updateField}
+              errors={errors}
+            />
+          )}
           {step >= 1 && step <= 6 && (
             <StepTerm
               term={LEGAL_TERMS[step - 1]}
@@ -221,7 +296,12 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
         </div>
 
         {/* Footer */}
-        <div style={{ padding: "16px 24px 20px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div
+          style={{
+            padding: "16px 24px 20px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
           <div style={{ display: "flex", gap: 12 }}>
             {step > 0 && (
               <button
@@ -239,13 +319,17 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
                   cursor: "pointer",
                   transition: "all 0.2s",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
+                }}
               >
                 Back
               </button>
             )}
-            {step < 7 ? (
+            {step < 7 ?
               <button
                 onClick={handleNext}
                 style={{
@@ -253,7 +337,10 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
                   padding: "12px 24px",
                   borderRadius: 30,
                   border: "none",
-                  background: step === 0 ? "linear-gradient(135deg, #00bfff, #0088cc)" : "rgba(255,255,255,0.95)",
+                  background:
+                    step === 0 ?
+                      "linear-gradient(135deg, #00bfff, #0088cc)"
+                    : "rgba(255,255,255,0.95)",
                   color: step === 0 ? "#fff" : "#111",
                   fontSize: 14,
                   fontWeight: 600,
@@ -264,17 +351,23 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
                   gap: 8,
                   transition: "all 0.2s",
                 }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.opacity = "0.9";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.opacity = "1";
+                }}
               >
-                {step === 0 ? (
-                  <>Review Legal Terms <ChevronRight size={16} /></>
-                ) : (
-                  <>I Understand & Agree <CheckCircle2 size={16} /></>
-                )}
+                {step === 0 ?
+                  <>
+                    Review Legal Terms <ChevronRight size={16} />
+                  </>
+                : <>
+                    I Understand & Agree <CheckCircle2 size={16} />
+                  </>
+                }
               </button>
-            ) : (
-              <button
+            : <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 style={{
@@ -295,17 +388,50 @@ export default function WaiverModal({ isOpen, onClose, onSubmit, vehicleMakeMode
                   transition: "all 0.2s",
                 }}
               >
-                {isSubmitting ? (
-                  <><Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Processing...</>
-                ) : (
-                  <><CheckCircle2 size={16} /> Complete & Submit</>
-                )}
+                {isSubmitting ?
+                  <>
+                    <Loader2
+                      size={16}
+                      style={{ animation: "spin 1s linear infinite" }}
+                    />{" "}
+                    Processing...
+                  </>
+                : <>
+                    <CheckCircle2 size={16} /> Complete & Submit
+                  </>
+                }
               </button>
-            )}
+            }
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
-            <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", fontWeight: 600 }}>Secure Digital Waiver</span>
-            <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.15em", fontWeight: 600 }}>SNH Golf Carts LLC</span>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: 16,
+            }}
+          >
+            <span
+              style={{
+                color: "rgba(255,255,255,0.25)",
+                fontSize: 10,
+                textTransform: "uppercase",
+                letterSpacing: "0.15em",
+                fontWeight: 600,
+              }}
+            >
+              Secure Digital Waiver
+            </span>
+            <span
+              style={{
+                color: "rgba(255,255,255,0.25)",
+                fontSize: 10,
+                textTransform: "uppercase",
+                letterSpacing: "0.15em",
+                fontWeight: 600,
+              }}
+            >
+              SNH Golf Carts LLC
+            </span>
           </div>
         </div>
       </div>
@@ -361,8 +487,13 @@ function StepInfo({ formData, updateField, errors }) {
             placeholder="Full Name"
             value={formData.fullName}
             onChange={(e) => updateField("fullName", e.target.value)}
-            onFocus={(e) => { e.target.style.borderColor = "#00bfff"; }}
-            onBlur={(e) => { e.target.style.borderColor = errors.fullName ? "#ff4444" : "rgba(255,255,255,0.08)"; }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#00bfff";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor =
+                errors.fullName ? "#ff4444" : "rgba(255,255,255,0.08)";
+            }}
           />
           {errors.fullName && <p style={errorStyle}>{errors.fullName}</p>}
         </div>
@@ -373,8 +504,13 @@ function StepInfo({ formData, updateField, errors }) {
             placeholder="Street, City, Zip"
             value={formData.address}
             onChange={(e) => updateField("address", e.target.value)}
-            onFocus={(e) => { e.target.style.borderColor = "#00bfff"; }}
-            onBlur={(e) => { e.target.style.borderColor = errors.address ? "#ff4444" : "rgba(255,255,255,0.08)"; }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#00bfff";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor =
+                errors.address ? "#ff4444" : "rgba(255,255,255,0.08)";
+            }}
           />
           {errors.address && <p style={errorStyle}>{errors.address}</p>}
         </div>
@@ -389,8 +525,13 @@ function StepInfo({ formData, updateField, errors }) {
             placeholder="603-XXX-XXXX"
             value={formData.phone}
             onChange={(e) => updateField("phone", e.target.value)}
-            onFocus={(e) => { e.target.style.borderColor = "#00bfff"; }}
-            onBlur={(e) => { e.target.style.borderColor = errors.phone ? "#ff4444" : "rgba(255,255,255,0.08)"; }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#00bfff";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor =
+                errors.phone ? "#ff4444" : "rgba(255,255,255,0.08)";
+            }}
           />
           {errors.phone && <p style={errorStyle}>{errors.phone}</p>}
         </div>
@@ -401,8 +542,13 @@ function StepInfo({ formData, updateField, errors }) {
             placeholder="email@example.com"
             value={formData.email}
             onChange={(e) => updateField("email", e.target.value)}
-            onFocus={(e) => { e.target.style.borderColor = "#00bfff"; }}
-            onBlur={(e) => { e.target.style.borderColor = errors.email ? "#ff4444" : "rgba(255,255,255,0.08)"; }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#00bfff";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor =
+                errors.email ? "#ff4444" : "rgba(255,255,255,0.08)";
+            }}
           />
           {errors.email && <p style={errorStyle}>{errors.email}</p>}
         </div>
@@ -410,10 +556,21 @@ function StepInfo({ formData, updateField, errors }) {
 
       {/* Vehicle Details */}
       <div>
-        <p style={{ color: "#00bfff", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12 }}>
+        <p
+          style={{
+            color: "#00bfff",
+            fontSize: 11,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.12em",
+            marginBottom: 12,
+          }}
+        >
           Vehicle Details
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}
+        >
           <div>
             <label style={labelStyle}>Make / Model</label>
             <input
@@ -421,10 +578,19 @@ function StepInfo({ formData, updateField, errors }) {
               placeholder="e.g. Apollo Gen2"
               value={formData.vehicleMakeModel}
               onChange={(e) => updateField("vehicleMakeModel", e.target.value)}
-              onFocus={(e) => { e.target.style.borderColor = "#00bfff"; }}
-              onBlur={(e) => { e.target.style.borderColor = errors.vehicleMakeModel ? "#ff4444" : "rgba(255,255,255,0.08)"; }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#00bfff";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor =
+                  errors.vehicleMakeModel ? "#ff4444" : (
+                    "rgba(255,255,255,0.08)"
+                  );
+              }}
             />
-            {errors.vehicleMakeModel && <p style={errorStyle}>{errors.vehicleMakeModel}</p>}
+            {errors.vehicleMakeModel && (
+              <p style={errorStyle}>{errors.vehicleMakeModel}</p>
+            )}
           </div>
           <div>
             <label style={labelStyle}>VIN / Serial #</label>
@@ -433,8 +599,13 @@ function StepInfo({ formData, updateField, errors }) {
               placeholder="Serial Number"
               value={formData.vinSerial}
               onChange={(e) => updateField("vinSerial", e.target.value)}
-              onFocus={(e) => { e.target.style.borderColor = "#00bfff"; }}
-              onBlur={(e) => { e.target.style.borderColor = errors.vinSerial ? "#ff4444" : "rgba(255,255,255,0.08)"; }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "#00bfff";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor =
+                  errors.vinSerial ? "#ff4444" : "rgba(255,255,255,0.08)";
+              }}
             />
             {errors.vinSerial && <p style={errorStyle}>{errors.vinSerial}</p>}
           </div>
@@ -449,8 +620,12 @@ function StepInfo({ formData, updateField, errors }) {
           type="date"
           value={formData.date}
           onChange={(e) => updateField("date", e.target.value)}
-          onFocus={(e) => { e.target.style.borderColor = "#00bfff"; }}
-          onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; }}
+          onFocus={(e) => {
+            e.target.style.borderColor = "#00bfff";
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = "rgba(255,255,255,0.08)";
+          }}
         />
       </div>
     </div>
@@ -479,7 +654,17 @@ function StepTerm({ term, termIndex, initial, onInitialChange, error }) {
         </span>
       </div>
 
-      <h3 style={{ color: "#fff", fontSize: 22, fontWeight: 700, margin: 0, lineHeight: 1.3 }}>{term.title}</h3>
+      <h3
+        style={{
+          color: "#fff",
+          fontSize: 22,
+          fontWeight: 700,
+          margin: 0,
+          lineHeight: 1.3,
+        }}
+      >
+        {term.title}
+      </h3>
 
       <div
         style={{
@@ -490,15 +675,34 @@ function StepTerm({ term, termIndex, initial, onInitialChange, error }) {
           border: "1px solid rgba(255,255,255,0.06)",
         }}
       >
-        <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 14, lineHeight: 1.7, margin: 0 }}>{term.body}</p>
-        <div style={{ position: "absolute", right: 16, bottom: 16, opacity: 0.1 }}>
+        <p
+          style={{
+            color: "rgba(255,255,255,0.75)",
+            fontSize: 14,
+            lineHeight: 1.7,
+            margin: 0,
+          }}
+        >
+          {term.body}
+        </p>
+        <div
+          style={{ position: "absolute", right: 16, bottom: 16, opacity: 0.1 }}
+        >
           <AlertTriangle size={48} color="#00bfff" />
         </div>
       </div>
 
       <div>
-        <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, textAlign: "center", marginBottom: 12 }}>
-          By entering your initials below, you acknowledge and agree to this term.
+        <p
+          style={{
+            color: "rgba(255,255,255,0.4)",
+            fontSize: 13,
+            textAlign: "center",
+            marginBottom: 12,
+          }}
+        >
+          By entering your initials below, you acknowledge and agree to this
+          term.
         </p>
         <div style={{ display: "flex", justifyContent: "center" }}>
           <input
@@ -520,11 +724,27 @@ function StepTerm({ term, termIndex, initial, onInitialChange, error }) {
               outline: "none",
               transition: "border-color 0.2s",
             }}
-            onFocus={(e) => { e.target.style.borderColor = "#00bfff"; }}
-            onBlur={(e) => { e.target.style.borderColor = error ? "#ff4444" : "rgba(255,255,255,0.12)"; }}
+            onFocus={(e) => {
+              e.target.style.borderColor = "#00bfff";
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor =
+                error ? "#ff4444" : "rgba(255,255,255,0.12)";
+            }}
           />
         </div>
-        {error && <p style={{ color: "#ff4444", fontSize: 12, textAlign: "center", marginTop: 6 }}>{error}</p>}
+        {error && (
+          <p
+            style={{
+              color: "#ff4444",
+              fontSize: 12,
+              textAlign: "center",
+              marginTop: 6,
+            }}
+          >
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -533,13 +753,37 @@ function StepTerm({ term, termIndex, initial, onInitialChange, error }) {
 /* ─── Step 7: Final Acknowledgment ─── */
 function StepFinal({ signaturePreview, fileInputRef, onFileChange, error }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, textAlign: "center" }}>
-      <div style={{ background: "rgba(0,191,255,0.08)", borderRadius: 16, padding: 16, display: "inline-flex" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 20,
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          background: "rgba(0,191,255,0.08)",
+          borderRadius: 16,
+          padding: 16,
+          display: "inline-flex",
+        }}
+      >
         <CheckCircle2 size={36} color="#00bfff" />
       </div>
 
       <div>
-        <h3 style={{ color: "#fff", fontSize: 22, fontWeight: 700, margin: "0 0 6px" }}>Final Acknowledgment</h3>
+        <h3
+          style={{
+            color: "#fff",
+            fontSize: 22,
+            fontWeight: 700,
+            margin: "0 0 6px",
+          }}
+        >
+          Final Acknowledgment
+        </h3>
         <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, margin: 0 }}>
           Please upload a clear photo of your handwritten signature.
         </p>
@@ -563,20 +807,51 @@ function StepFinal({ signaturePreview, fileInputRef, onFileChange, error }) {
           gap: 8,
           transition: "all 0.2s",
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#00bfff"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = error ? "#ff4444" : "rgba(0,191,255,0.25)"; }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = "#00bfff";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor =
+            error ? "#ff4444" : "rgba(0,191,255,0.25)";
+        }}
       >
-        {signaturePreview ? (
-          <img src={signaturePreview} alt="Signature" style={{ maxWidth: "100%", maxHeight: 120, borderRadius: 8 }} />
-        ) : (
-          <>
+        {signaturePreview ?
+          <img
+            src={signaturePreview}
+            alt="Signature"
+            style={{ maxWidth: "100%", maxHeight: 120, borderRadius: 8 }}
+          />
+        : <>
             <Upload size={28} color="rgba(255,255,255,0.35)" />
-            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, fontWeight: 600, margin: 0 }}>Tap to Upload Photo</p>
-            <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 12, margin: 0 }}>PNG, JPG or JPEG</p>
+            <p
+              style={{
+                color: "rgba(255,255,255,0.6)",
+                fontSize: 14,
+                fontWeight: 600,
+                margin: 0,
+              }}
+            >
+              Tap to Upload Photo
+            </p>
+            <p
+              style={{
+                color: "rgba(255,255,255,0.3)",
+                fontSize: 12,
+                margin: 0,
+              }}
+            >
+              PNG, JPG or JPEG
+            </p>
           </>
-        )}
+        }
       </button>
-      <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/jpg" onChange={onFileChange} style={{ display: "none" }} />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/jpg"
+        onChange={onFileChange}
+        style={{ display: "none" }}
+      />
 
       {error && <p style={{ color: "#ff4444", fontSize: 12 }}>{error}</p>}
 
@@ -592,9 +867,20 @@ function StepFinal({ signaturePreview, fileInputRef, onFileChange, error }) {
           textAlign: "left",
         }}
       >
-        <Shield size={16} style={{ color: "#00bfff", flexShrink: 0, marginTop: 2 }} />
-        <p style={{ color: "rgba(255,255,255,0.55)", fontSize: 12, margin: 0, lineHeight: 1.5 }}>
-          By submitting this form, you certify that all information is accurate and you are the authorized owner of the vehicle.
+        <Shield
+          size={16}
+          style={{ color: "#00bfff", flexShrink: 0, marginTop: 2 }}
+        />
+        <p
+          style={{
+            color: "rgba(255,255,255,0.55)",
+            fontSize: 12,
+            margin: 0,
+            lineHeight: 1.5,
+          }}
+        >
+          By submitting this form, you certify that all information is accurate
+          and you are the authorized owner of the vehicle.
         </p>
       </div>
     </div>
