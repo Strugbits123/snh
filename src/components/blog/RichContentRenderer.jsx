@@ -1,14 +1,8 @@
-/**
- * Renders Wix Headless CMS richContent (Ricos format) structured nodes.
- */
-
-// Wix media IDs include the filename+extension (e.g. "795930_abc~mv2.jpeg")
-// The direct URL is simply: https://static.wixstatic.com/media/{id}
 function wixImageUrl(src) {
   if (!src) return null;
-  if (typeof src === 'string') {
-    if (src.startsWith('wix:image://v1/')) {
-      const mediaId = src.replace('wix:image://v1/', '').split('/')[0];
+  if (typeof src === "string") {
+    if (src.startsWith("wix:image://v1/")) {
+      const mediaId = src.replace("wix:image://v1/", "").split("/")[0];
       return `https://static.wixstatic.com/media/${mediaId}`;
     }
     return src;
@@ -21,13 +15,14 @@ function wixImageUrl(src) {
 function renderDecorations(text, decorations = []) {
   if (!decorations || decorations.length === 0) return text;
 
-  const bold = decorations.some(d => d.type === "BOLD");
-  const italic = decorations.some(d => d.type === "ITALIC");
-  const underline = decorations.some(d => d.type === "UNDERLINE");
-  const linkDec = decorations.find(d => d.type === "LINK");
+  const bold = decorations.some((d) => d.type === "BOLD");
+  const italic = decorations.some((d) => d.type === "ITALIC");
+  const underline = decorations.some((d) => d.type === "UNDERLINE");
+  const linkDec = decorations.find((d) => d.type === "LINK");
 
   let el = <>{text}</>;
-  if (bold) el = <strong className="font-semibold text-foreground">{el}</strong>;
+  if (bold)
+    el = <strong className="font-semibold text-foreground">{el}</strong>;
   if (italic) el = <em>{el}</em>;
   if (underline) el = <u>{el}</u>;
   if (linkDec?.linkData?.link?.url) {
@@ -60,8 +55,7 @@ function RenderNode({ node, idx }) {
 
   switch (node.type) {
     case "PARAGRAPH": {
-      // Skip empty paragraph nodes (Wix uses them as spacers)
-      const hasText = node.nodes && node.nodes.some(n => n.textData?.text);
+      const hasText = node.nodes && node.nodes.some((n) => n.textData?.text);
       if (!hasText) return null;
       return (
         <p key={idx} className="text-base leading-7 text-muted-foreground mb-3">
@@ -95,7 +89,7 @@ function RenderNode({ node, idx }) {
       if (!url) return null;
       const altText = image.altText || "";
       const caption = node.imageData?.caption;
-      // Preserve aspect ratio from width/height if available
+
       const w = image.width;
       const h = image.height;
       const aspectStyle = w && h ? { aspectRatio: `${w} / ${h}` } : {};
@@ -139,7 +133,10 @@ function RenderNode({ node, idx }) {
 
     case "BLOCKQUOTE": {
       return (
-        <blockquote key={idx} className="border-l-4 border-accent/50 pl-5 my-5 italic text-muted-foreground">
+        <blockquote
+          key={idx}
+          className="border-l-4 border-accent/50 pl-5 my-5 italic text-muted-foreground"
+        >
           {(node.nodes || []).map((child, i) => (
             <RenderNode key={i} node={child} idx={i} />
           ))}
@@ -153,11 +150,14 @@ function RenderNode({ node, idx }) {
 
     case "CODE_BLOCK": {
       const text = (node.nodes || [])
-        .flatMap(n => n.nodes || [n])
-        .map(n => n.textData?.text || "")
+        .flatMap((n) => n.nodes || [n])
+        .map((n) => n.textData?.text || "")
         .join("");
       return (
-        <pre key={idx} className="bg-muted rounded-xl p-4 my-5 overflow-x-auto text-sm font-mono text-foreground">
+        <pre
+          key={idx}
+          className="bg-muted rounded-xl p-4 my-5 overflow-x-auto text-sm font-mono text-foreground"
+        >
           <code>{text}</code>
         </pre>
       );
@@ -169,7 +169,7 @@ function RenderNode({ node, idx }) {
 }
 
 function RenderListItem({ node }) {
-  const paragraphs = (node.nodes || []).filter(n => n.type === "PARAGRAPH");
+  const paragraphs = (node.nodes || []).filter((n) => n.type === "PARAGRAPH");
   return (
     <li className="text-base leading-7 text-muted-foreground">
       {paragraphs.map((p, i) => (

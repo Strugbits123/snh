@@ -18,14 +18,11 @@ function ShopContent() {
   const [colorFilter, setColorFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("Golf Carts");
 
-  // Handle query params on load and change
   useEffect(() => {
     const make = searchParams.get("make");
     if (make) {
-      // Find the actual brand name from the brands list to maintain consistent casing
-      // But for initial load before brands are fetched, we just set it.
       const actualBrand = brands.find(
-        (b) => b.toLowerCase() === make.toLowerCase()
+        (b) => b.toLowerCase() === make.toLowerCase(),
       );
       setMakeFilter(actualBrand || make);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -42,30 +39,27 @@ function ShopContent() {
         const rawItems = res.products || [];
         const collections = res.collections || [];
 
-        // console.log("RawItems==>",rawItems);
-        // console.log("Colectioms==>",collections)
-        
-        const processed = rawItems.map((item) => extractProductDetails(item, collections));
+        const processed = rawItems.map((item) =>
+          extractProductDetails(item, collections),
+        );
 
-        // Sort inStock first
         const sorted = processed.sort((a, b) => {
           if (a.inStock && !b.inStock) return -1;
           if (!a.inStock && b.inStock) return 1;
           return 0;
         });
-        
+
         setProducts(sorted);
 
         const uniqueBrands = Array.from(
-          new Set(sorted.map((p) => p.brand).filter(Boolean))
+          new Set(sorted.map((p) => p.brand).filter(Boolean)),
         );
         setBrands(uniqueBrands);
 
-        // If we have a makeFilter from URL, check if it matches any real brand (case-insensitive)
         const make = searchParams.get("make");
         if (make) {
           const matchedBrand = uniqueBrands.find(
-            (b) => b.toLowerCase() === make.toLowerCase()
+            (b) => b.toLowerCase() === make.toLowerCase(),
           );
           if (matchedBrand) setMakeFilter(matchedBrand);
         }
@@ -74,21 +68,19 @@ function ShopContent() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Filter products by category FIRST to get dynamic options
   const categoryProducts = products.filter((p) => {
     return categoryFilter === "Golf Carts" ? !p.isAccessory : p.isAccessory;
   });
 
   const categoryBrands = Array.from(
-    new Set(categoryProducts.map((p) => p.brand).filter(Boolean))
+    new Set(categoryProducts.map((p) => p.brand).filter(Boolean)),
   );
 
   const categoryColors = Array.from(
-    new Set(categoryProducts.flatMap((p) => p.colors || []).filter(Boolean))
+    new Set(categoryProducts.flatMap((p) => p.colors || []).filter(Boolean)),
   );
 
   const filtered = categoryProducts.filter((p) => {
-    // Seat filter
     let seatMatch = true;
     if (categoryFilter === "Golf Carts") {
       if (seatFilter === "2 Seats") seatMatch = p.seats === 2;
@@ -97,18 +89,16 @@ function ShopContent() {
       else if (seatFilter === "8 Seats") seatMatch = p.seats >= 8;
     }
 
-    // Make filter (Case-Insensitive Match) - ONLY apply for Golf Carts
     const makeMatch =
       categoryFilter === "Accessories" ||
       makeFilter === "All" ||
       (p.brand && p.brand.toLowerCase() === makeFilter.toLowerCase());
 
-    // Color filter
     const colorMatch =
       colorFilter === "All" ||
       (p.colors &&
         p.colors.some((c) =>
-          c.toLowerCase().includes(colorFilter.toLowerCase())
+          c.toLowerCase().includes(colorFilter.toLowerCase()),
         ));
 
     return seatMatch && makeMatch && colorMatch;
@@ -116,7 +106,7 @@ function ShopContent() {
 
   const handleCategoryChange = (cat) => {
     setCategoryFilter(cat);
-    // Reset filters when category changes
+
     setSeatFilter("All");
     setMakeFilter("All");
     setColorFilter("All");
@@ -161,10 +151,11 @@ function ShopContent() {
             <button
               key={cat}
               onClick={() => handleCategoryChange(cat)}
-              className={`px-8 py-2.5 rounded-full font-semibold transition-all duration-300 shadow-sm border ${categoryFilter === cat
-                ? "bg-accent  text-white border-accent scale-105"
+              className={`px-8 py-2.5 rounded-full font-semibold transition-all duration-300 shadow-sm border ${
+                categoryFilter === cat ?
+                  "bg-accent  text-white border-accent scale-105"
                 : "bg-white text-muted-foreground border-border hover:border-accent hover:text-accent"
-                }`}
+              }`}
             >
               {cat}
             </button>
@@ -190,15 +181,15 @@ function ShopContent() {
           <div className="flex justify-center py-32">
             <Loader2 className="w-8 h-8 animate-spin text-accent" />
           </div>
-          : filtered.length === 0 ?
-            <div className="text-center py-32 text-muted-foreground">
-              No carts match your filters.
-            </div>
-            : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filtered.map((cart, i) => (
-                <ProductCard key={cart.id} cart={cart} index={i} />
-              ))}
-            </div>
+        : filtered.length === 0 ?
+          <div className="text-center py-32 text-muted-foreground">
+            No carts match your filters.
+          </div>
+        : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filtered.map((cart, i) => (
+              <ProductCard key={cart.id} cart={cart} index={i} />
+            ))}
+          </div>
         }
       </div>
     </div>
@@ -206,11 +197,13 @@ function ShopContent() {
 }
 export default function Shop() {
   return (
-    <Suspense fallback={
-      <div className="flex justify-center py-64">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-64">
+          <Loader2 className="w-8 h-8 animate-spin text-accent" />
+        </div>
+      }
+    >
       <ShopContent />
     </Suspense>
   );

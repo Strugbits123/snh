@@ -19,7 +19,7 @@ import {
   CreditCard,
   ChevronLeft,
   ChevronRight,
-  DollarSign
+  DollarSign,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
@@ -42,34 +42,38 @@ export default function ProductDetail() {
     setLoading(true);
     setActiveImage(0);
 
-    // Fetch products and collections from our combined API
     fetch("/api/products")
       .then((r) => r.json())
       .then((res) => {
         const rawProducts = res.products || [];
         const collections = res.collections || [];
-        
-        const rawProduct = rawProducts.find(p => (p._id || p.id) === id);
-        
+
+        const rawProduct = rawProducts.find((p) => (p._id || p.id) === id);
+
         if (rawProduct) {
           const product = extractProductDetails(rawProduct, collections);
           setCart(product);
           if (product.colors?.length > 0) {
-            setSelectedOptions({ [product.colorOptionName]: product.colors[0] });
+            setSelectedOptions({
+              [product.colorOptionName]: product.colors[0],
+            });
           }
-          
-          const processed = rawProducts.map(item => extractProductDetails(item, collections));
-          
-          // Related logic: 
-          // If accessory, show other accessories. 
-          // If golf cart, show other carts from same brand.
+
+          const processed = rawProducts.map((item) =>
+            extractProductDetails(item, collections),
+          );
+
           let relatedItems = [];
           if (product.isAccessory) {
-            relatedItems = processed.filter(p => p.isAccessory && p.id !== id);
+            relatedItems = processed.filter(
+              (p) => p.isAccessory && p.id !== id,
+            );
           } else {
-            relatedItems = processed.filter(p => !p.isAccessory && p.brand === product.brand && p.id !== id);
+            relatedItems = processed.filter(
+              (p) => !p.isAccessory && p.brand === product.brand && p.id !== id,
+            );
           }
-          
+
           setRelated(relatedItems.slice(0, 3));
         }
       })
@@ -77,26 +81,23 @@ export default function ProductDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Opens the waiver modal instead of going directly to checkout
   const handleCardCheckout = () => {
     setShowWaiver(true);
   };
 
-  // Called after waiver form is submitted
   const handleWaiverSubmit = async (waiverData) => {
     setWaiverSubmitting(true);
     setCheckoutLoading(true);
     try {
-      // Step 1: Generate PDF and upload to Wix
       const waiverRes = await fetch("/api/waiver-upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(waiverData),
       });
       const waiverResult = await waiverRes.json();
-      const waiverPdfUrl = waiverResult.pdfUrl || waiverResult.pdfBase64 || "Waiver submitted";
+      const waiverPdfUrl =
+        waiverResult.pdfUrl || waiverResult.pdfBase64 || "Waiver submitted";
 
-      // Step 2: Proceed with checkout, passing the waiver URL
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -114,16 +115,21 @@ export default function ProductDetail() {
       const data = await res.json();
       if (data.checkoutUrl) {
         try {
-          sessionStorage.setItem("snh_pending_order", JSON.stringify({
-            productName: `${cart.brand?.toUpperCase() || ""} ${cart.name}`,
-            productImage: cart.image,
-            productPrice: cart.formattedPrice || cart.price,
-            quantity: 1,
-            options: selectedOptions,
-            checkoutId: data.checkoutId,
-            timestamp: Date.now(),
-          }));
-        } catch (e) { /* ignore storage errors */ }
+          sessionStorage.setItem(
+            "snh_pending_order",
+            JSON.stringify({
+              productName: `${cart.brand?.toUpperCase() || ""} ${cart.name}`,
+              productImage: cart.image,
+              productPrice: cart.formattedPrice || cart.price,
+              quantity: 1,
+              options: selectedOptions,
+              checkoutId: data.checkoutId,
+              timestamp: Date.now(),
+            }),
+          );
+        } catch (e) {
+          /* ignore storage errors */
+        }
         window.location.href = data.checkoutUrl;
       } else {
         alert("Unable to start checkout. Please call us or try again.");
@@ -162,7 +168,11 @@ export default function ProductDetail() {
   const images = [cart.image, ...cart.gallery].filter(Boolean);
 
   const specs = [
-    { icon: Users, label: "Seats", value: cart.seats ? `${cart.seats} Passengers` : null },
+    {
+      icon: Users,
+      label: "Seats",
+      value: cart.seats ? `${cart.seats} Passengers` : null,
+    },
     { icon: Zap, label: "Range", value: cart.range },
     { icon: Gauge, label: "Top Speed", value: cart.topSpeed },
     { icon: Battery, label: "Battery", value: cart.battery },
@@ -196,13 +206,21 @@ export default function ProductDetail() {
               {images.length > 1 && (
                 <>
                   <button
-                    onClick={() => setActiveImage((p) => (p === 0 ? images.length - 1 : p - 1))}
+                    onClick={() =>
+                      setActiveImage((p) =>
+                        p === 0 ? images.length - 1 : p - 1,
+                      )
+                    }
                     className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors shadow-lg"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => setActiveImage((p) => (p === images.length - 1 ? 0 : p + 1))}
+                    onClick={() =>
+                      setActiveImage((p) =>
+                        p === images.length - 1 ? 0 : p + 1,
+                      )
+                    }
                     className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center hover:bg-white transition-colors shadow-lg"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -211,7 +229,9 @@ export default function ProductDetail() {
               )}
               <div className="absolute top-4 left-4 flex gap-2">
                 {!cart.inStock && (
-                  <Badge className="bg-red-600 text-white border-0">Out of Stock</Badge>
+                  <Badge className="bg-red-600 text-white border-0">
+                    Out of Stock
+                  </Badge>
                 )}
               </div>
             </div>
@@ -223,10 +243,16 @@ export default function ProductDetail() {
                     onClick={() => setActiveImage(i)}
                     className={cn(
                       "w-20 h-16 rounded-xl overflow-hidden border-2 transition-colors shrink-0",
-                      i === activeImage ? "border-accent" : "border-transparent"
+                      i === activeImage ? "border-accent" : (
+                        "border-transparent"
+                      ),
                     )}
                   >
-                    <img src={img} alt="" className="w-full h-full object-contain" />
+                    <img
+                      src={img}
+                      alt=""
+                      className="w-full h-full object-contain"
+                    />
                   </button>
                 ))}
               </div>
@@ -244,50 +270,71 @@ export default function ProductDetail() {
                 {cart.brand}
               </p>
             )}
-            <h1 className="font-display font-bold text-3xl sm:text-4xl mb-3">{cart.name}</h1>
+            <h1 className="font-display font-bold text-3xl sm:text-4xl mb-3">
+              {cart.name}
+            </h1>
             <div className="text-3xl font-bold text-foreground mb-4">
               {cart.formattedPrice || "Call for Price"}
             </div>
 
             {/* Financing Badge — hidden for accessories */}
-            {!cart.isAccessory && (() => {
-              let partner = "Sheffield Financial"; // Default
-              const brandLower = cart.brand?.toLowerCase() || "";
-              
-              if (brandLower.includes("dach") || brandLower.includes("conquest")) {
-                partner = "Dealer Direct";
-              } else if (brandLower.includes("evolution") || brandLower.includes("teko") || brandLower.includes("tomberlin")) {
-                partner = "Sheffield Financial";
-              }
-              
-              return <FinancingBadge partner={partner} />;
-            })()}
+            {!cart.isAccessory &&
+              (() => {
+                let partner = "Sheffield Financial"; // Default
+                const brandLower = cart.brand?.toLowerCase() || "";
+
+                if (
+                  brandLower.includes("dach") ||
+                  brandLower.includes("conquest")
+                ) {
+                  partner = "Dealer Direct";
+                } else if (
+                  brandLower.includes("evolution") ||
+                  brandLower.includes("teko") ||
+                  brandLower.includes("tomberlin")
+                ) {
+                  partner = "Sheffield Financial";
+                }
+
+                return <FinancingBadge partner={partner} />;
+              })()}
 
             {specs.length > 0 && (
               <div className="grid grid-cols-2 gap-2 sm:gap-3 my-6">
                 {specs.map((spec) => (
-                  <div key={spec.label} className="bg-muted rounded-xl p-3 sm:p-4">
+                  <div
+                    key={spec.label}
+                    className="bg-muted rounded-xl p-3 sm:p-4"
+                  >
                     <spec.icon className="w-4 h-4 sm:w-5 sm:h-5 text-accent mb-2" />
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">{spec.label}</p>
-                    <p className="font-semibold text-xs sm:text-sm">{spec.value}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">
+                      {spec.label}
+                    </p>
+                    <p className="font-semibold text-xs sm:text-sm">
+                      {spec.value}
+                    </p>
                   </div>
                 ))}
               </div>
             )}
-            
+
             {cart.colors?.length > 0 && (
               <div className="mb-6">
-                <p className="text-xs font-semibold uppercase tracking-wider mb-3">Select Color</p>
+                <p className="text-xs font-semibold uppercase tracking-wider mb-3">
+                  Select Color
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {cart.colors.map((color) => (
                     <button
                       key={color}
-                      onClick={() => setSelectedOptions({ [cart.colorOptionName]: color })}
+                      onClick={() =>
+                        setSelectedOptions({ [cart.colorOptionName]: color })
+                      }
                       className={cn(
                         "px-4 py-2 rounded-full border text-xs font-medium transition-all",
-                        selectedOptions[cart.colorOptionName] === color
-                          ? "bg-accent border-accent text-white shadow-md"
-                          : "bg-background border-border text-muted-foreground hover:border-accent/50"
+                        selectedOptions[cart.colorOptionName] === color ?
+                          "bg-accent border-accent text-white shadow-md"
+                        : "bg-background border-border text-muted-foreground hover:border-accent/50",
                       )}
                     >
                       {color}
@@ -304,11 +351,9 @@ export default function ProductDetail() {
                 onClick={handleCardCheckout}
                 disabled={checkoutLoading || !cart.inStock}
               >
-                {checkoutLoading ? (
+                {checkoutLoading ?
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                ) : (
-                  <CreditCard className="w-5 h-5 mr-2" />
-                )}
+                : <CreditCard className="w-5 h-5 mr-2" />}
                 {checkoutLoading ? "Preparing Checkout..." : "Pay via Card"}
               </Button>
               <div className="flex items-center justify-center gap-3 py-2">
@@ -332,7 +377,10 @@ export default function ProductDetail() {
         {/* Waiver Modal */}
         <WaiverModal
           isOpen={showWaiver}
-          onClose={() => { setShowWaiver(false); setCheckoutLoading(false); }}
+          onClose={() => {
+            setShowWaiver(false);
+            setCheckoutLoading(false);
+          }}
           onSubmit={handleWaiverSubmit}
           vehicleMakeModel={`${cart.brand || ""} ${cart.name}`.trim()}
           isSubmitting={waiverSubmitting}
@@ -360,7 +408,9 @@ export default function ProductDetail() {
         {related.length > 0 && (
           <section className="mt-24">
             <h2 className="font-display font-bold text-2xl mb-8">
-              {cart.isAccessory ? "More Accessories" : `More from ${cart.brand}`}
+              {cart.isAccessory ?
+                "More Accessories"
+              : `More from ${cart.brand}`}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {related.map((c, i) => (

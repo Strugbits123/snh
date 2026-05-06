@@ -185,7 +185,6 @@ export async function POST(req) {
 
       resolvedLineItems.push(lineItem);
     }
-    // === WAIVER PDF HANDLING ===
 
     let customFields = [];
     console.log("Waiver PDF URL==>", waiverPdfUrl);
@@ -203,10 +202,8 @@ export async function POST(req) {
       channelType: "WEB",
     };
 
-    // Use env variable for redirects
     const origin = "https://www.snhgolfcarts.com";
 
-    // Add thank you page URL to the checkout itself for better support in some flows
     checkoutPayload.thankyouPageUrl = `${origin}/order-confirmation`;
 
     console.log(
@@ -259,7 +256,6 @@ export async function POST(req) {
       );
     }
 
-    // === UPDATE CHECKOUT WITH WAIVER DATA ===
     if (waiverPdfUrl) {
       try {
         console.log("Updating checkout with Waiver PDF...");
@@ -334,7 +330,6 @@ export async function POST(req) {
 
       const thankYouUrl = `${origin}/order-confirmation`;
 
-      // Fallback 1: Try REST API redirect session
       try {
         const redirectRes = await fetch(
           "https://www.wixapis.com/redirects-api/v1/redirect-session",
@@ -367,7 +362,6 @@ export async function POST(req) {
         console.error("REST redirect session failed:", restRedirectErr.message);
       }
 
-      // Fallback 2: Use checkout-url endpoint (Wix's own hosted page)
       const urlResponse = await fetch(
         `https://www.wixapis.com/ecom/v1/checkouts/${checkoutId}/checkout-url`,
         { method: "GET", headers },

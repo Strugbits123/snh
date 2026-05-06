@@ -7,7 +7,7 @@ export async function GET(req, { params }) {
     if (!orderId) {
       return NextResponse.json(
         { error: "Order ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -20,7 +20,6 @@ export async function GET(req, { params }) {
   } catch (err) {
     console.error("Order fetch error:", err);
 
-    // Fallback: try via REST API
     try {
       const API_KEY = process.env.WIX_API_KEY;
       const SITE_ID = process.env.WIX_SITE_ID;
@@ -36,7 +35,7 @@ export async function GET(req, { params }) {
               Authorization: API_KEY,
               "wix-site-id": SITE_ID,
             },
-          }
+          },
         );
 
         if (res.ok) {
@@ -50,7 +49,7 @@ export async function GET(req, { params }) {
 
     return NextResponse.json(
       { error: "Failed to fetch order details" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

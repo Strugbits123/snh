@@ -28,12 +28,11 @@ function OrderDetails() {
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    // Try loading from sessionStorage first (as fallback)
     try {
       const saved = sessionStorage.getItem("snh_pending_order");
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Only use if less than 1 hour old
+
         if (Date.now() - parsed.timestamp < 3600000) {
           setFallbackOrder(parsed);
         }
@@ -49,7 +48,6 @@ function OrderDetails() {
       return;
     }
 
-    // If we have an orderId from Wix, fetch the full order
     fetch(`/api/orders/${orderId}`)
       .then((r) => r.json())
       .then((data) => {
@@ -64,14 +62,12 @@ function OrderDetails() {
   }, [orderId, router]);
 
   useEffect(() => {
-    // If the API failed to fetch the order and we don't have a fallback, redirect home.
     if (error && !fallbackOrder && !loading) {
       setRedirecting(true);
       router.replace("/");
     }
   }, [error, fallbackOrder, loading, router]);
 
-  // Decide what to display
   const hasOrderData = order || fallbackOrder;
 
   if (redirecting || (loading && !hasOrderData)) {
@@ -85,7 +81,6 @@ function OrderDetails() {
     );
   }
 
-  // Extract line items from Wix order
   const lineItems = order?.lineItems || [];
   const priceSummary = order?.priceSummary;
   const shippingAddress =

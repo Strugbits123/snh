@@ -21,11 +21,9 @@ export default function BlogDetail() {
     setLoading(true);
     setNotFound(false);
 
-    // Use the dedicated detail endpoint which handles full content fetching
     fetch(`/api/blogs/${slug}`)
       .then((r) => r.json())
       .then((res) => {
-        // The API returns the post object directly or inside a post wrapper
         const fullPost = res.post || res.data?.post || res;
 
         if (fullPost && (fullPost.title || fullPost._id)) {
@@ -41,7 +39,6 @@ export default function BlogDetail() {
       .finally(() => setLoading(false));
   }, [slug]);
 
-  // Update document title for SEO
   useEffect(() => {
     if (post) {
       document.title = post.seoTitle || post.title;

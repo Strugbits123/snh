@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 
 export async function POST(req) {
@@ -6,7 +5,6 @@ export async function POST(req) {
     const data = await req.json();
     const { name, email, phone, appointmentType, message } = data;
 
-    // Stronger validation
     if (!name?.trim() && !email?.trim()) {
       return NextResponse.json(
         { error: "Name or Email is required" },
@@ -39,10 +37,8 @@ export async function POST(req) {
       "Content-Type": "application/json",
     };
 
-    // Build info object carefully
     const info = {};
 
-    // Add name only if we have something
     if (firstName || lastName) {
       info.name = {
         first: firstName,
@@ -50,7 +46,6 @@ export async function POST(req) {
       };
     }
 
-    // Add email (v4 requires items wrapper)
     if (trimmedEmail) {
       info.emails = {
         items: [
@@ -62,7 +57,6 @@ export async function POST(req) {
       };
     }
 
-    // Add phone (v4 requires items wrapper)
     if (trimmedPhone) {
       info.phones = {
         items: [
@@ -74,7 +68,6 @@ export async function POST(req) {
       };
     }
 
-    // Final safety check
     if (Object.keys(info).length === 0) {
       return NextResponse.json(
         { error: "No valid contact information provided" },
@@ -82,12 +75,9 @@ export async function POST(req) {
       );
     }
 
-    // V4 structure: "info" is at the top level
     const contactPayload = {
       info: info,
     };
-
-    // console.log("Sending to Wix V4:", JSON.stringify(contactPayload, null, 2));
 
     const contactResponse = await fetch(
       "https://www.wixapis.com/contacts/v4/contacts",
@@ -99,7 +89,6 @@ export async function POST(req) {
     );
 
     const contactData = await contactResponse.json();
-    // console.log("Wix Response:", JSON.stringify(contactData, null, 2));
 
     if (!contactResponse.ok) {
       console.error("Wix API Error:", contactData);
@@ -114,10 +103,8 @@ export async function POST(req) {
       );
     }
 
-    // V4 returns the contact directly at the root
     const contactId = contactData.id || contactData.contact?.id;
 
-    // Add note (optional)
     if (contactId && message?.trim()) {
       const noteContent = `--- Appointment Request ---\nType: ${appointmentType || "Not specified"}\n\n${message.trim()}`;
 

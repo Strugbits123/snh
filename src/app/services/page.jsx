@@ -107,7 +107,6 @@ export default function Services() {
     setLoading(false);
   }, []);
 
-  // Handle scrolling to hash on load
   useEffect(() => {
     const handleScroll = () => {
       const hash = window.location.hash;
@@ -115,7 +114,6 @@ export default function Services() {
         const id = hash.substring(1);
         const el = document.getElementById(id);
         if (el) {
-          // Double frame wait to ensure rendering is complete
           requestAnimationFrame(() => {
             requestAnimationFrame(() => {
               el.scrollIntoView({ behavior: "smooth" });
@@ -127,9 +125,9 @@ export default function Services() {
 
     if (!loading) {
       handleScroll();
-      // Also listen for hash changes
-      window.addEventListener('hashchange', handleScroll);
-      return () => window.removeEventListener('hashchange', handleScroll);
+
+      window.addEventListener("hashchange", handleScroll);
+      return () => window.removeEventListener("hashchange", handleScroll);
     }
   }, [loading]);
 

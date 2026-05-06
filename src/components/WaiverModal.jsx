@@ -51,7 +51,7 @@ export default function WaiverModal({
   vehicleMakeModel,
   isSubmitting,
 }) {
-  const [step, setStep] = useState(0); // 0 = info, 1-6 = terms, 7 = final
+  const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
     fullName: "",
     address: "",
@@ -67,17 +67,16 @@ export default function WaiverModal({
   const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
 
-  const totalSteps = 8; // 1 info + 6 terms + 1 final
+  const totalSteps = 8;
   const progressSegment =
     step < 1 ? 0
     : step <= 6 ? 1
-    : 2; // 0=info, 1=terms, 2=final
+    : 2;
 
   const updateField = useCallback((field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
 
-    // Auto-populate first name when full name is typed
     if (field === "fullName") {
       const firstName = value.trim().split(/\s+/)[0] || "";
       setInitials(new Array(21).fill(firstName));

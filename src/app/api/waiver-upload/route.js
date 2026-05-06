@@ -16,14 +16,12 @@ export async function POST(req) {
       signatureBase64,
     } = body;
 
-    // ── 1. Generate PDF ──
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;
     const contentWidth = pageWidth - margin * 2;
     let y = 20;
 
-    // Helper functions
     const addLine = () => {
       doc.setDrawColor(200, 168, 75);
       doc.setLineWidth(0.5);
@@ -38,7 +36,6 @@ export async function POST(req) {
       }
     };
 
-    // ── Header ──
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.setTextColor(26, 26, 46);
@@ -51,7 +48,6 @@ export async function POST(req) {
     y += 8;
     addLine();
 
-    // ── Customer Information ──
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(26, 26, 46);
@@ -83,7 +79,6 @@ export async function POST(req) {
     y += 4;
     addLine();
 
-    // ── Purpose of Modification ──
     checkPage(25);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
@@ -94,12 +89,12 @@ export async function POST(req) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(60, 60, 60);
-    const purposeText = "I am requesting modification to my vehicle's factory programming, including speed adjustments beyond standard LSV limits.";
+    const purposeText =
+      "I am requesting modification to my vehicle's factory programming, including speed adjustments beyond standard LSV limits.";
     const purposeLines = doc.splitTextToSize(purposeText, contentWidth);
     doc.text(purposeLines, margin, y);
     y += purposeLines.length * 5 + 6;
 
-    // ── Legal Terms ──
     const terms = [
       {
         title: "New Hampshire Legal Acknowledgment",
@@ -151,7 +146,6 @@ export async function POST(req) {
     y += 2;
     addLine();
 
-    // ── Final Acknowledgment ──
     checkPage(40);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
@@ -162,12 +156,12 @@ export async function POST(req) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(60, 60, 60);
-    const ackText = "I have read and understand all terms above. I am requesting these modifications voluntarily and accept all consequences and liability.";
+    const ackText =
+      "I have read and understand all terms above. I am requesting these modifications voluntarily and accept all consequences and liability.";
     const ackLines = doc.splitTextToSize(ackText, contentWidth);
     doc.text(ackLines, margin, y);
     y += ackLines.length * 5 + 6;
 
-    // Add signature image if provided
     if (signatureBase64) {
       checkPage(40);
       doc.setFont("helvetica", "bold");
@@ -184,19 +178,16 @@ export async function POST(req) {
       }
     }
 
-    // Print Name & Date
     doc.setFont("helvetica", "normal");
     doc.text(`Printed Name: ${fullName}`, margin, y);
     y += 6;
     doc.text(`Date: ${date}`, margin, y);
     y += 10;
 
-    // SNH Representative section
     doc.text("SNH Representative: ________________________________", margin, y);
     y += 6;
     doc.text("Date: __________", margin, y);
 
-    // ── Footer ──
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
@@ -206,10 +197,8 @@ export async function POST(req) {
       doc.text(`Page ${i} of ${pageCount}`, pageWidth - margin - 25, 287);
     }
 
-    // Convert to buffer
     const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
 
-    // ── 2. Upload to Wix Media ──
     const API_KEY = process.env.WIX_API_KEY;
     const SITE_ID = process.env.WIX_SITE_ID;
 
@@ -219,87 +208,179 @@ export async function POST(req) {
       "wix-site-id": SITE_ID,
     };
 
-    const safeName = (fullName || "customer").replace(/[^a-zA-Z0-9]/g, "_").substring(0, 30);
-    const fileName = `waiver_${safeName}_${Date.now()}.pdf`;
+    const uploadToWix = async (buffer, fileName, mimeType) => {
+      try {
+        const urlRes = await fetch(
+          "https://www.wixapis.com/site-media/v1/files/generate-upload-url",
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ mimeType, fileName }),
+          },
+        );
+        if (!urlRes.ok) return null;
+        const { uploadUrl } = await urlRes.json();
 
-    // Step 2a: Get upload URL from Wix
-    const uploadUrlRes = await fetch(
-      "https://www.wixapis.com/site-media/v1/files/generate-upload-url",
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          mimeType: "application/pdf",
-          fileName: fileName,
-          parentFolderId: null,
-        }),
+        const uploadRes = await fetch(uploadUrl, {
+          method: "PUT",
+          body: buffer,
+          headers: { "Content-Type": mimeType },
+        });
+        if (!uploadRes.ok) return null;
+        const uploadResult = await uploadRes.json();
+        return (
+          uploadResult.file?.url ||
+          uploadResult.file?.fileUrl ||
+          uploadResult.url ||
+          `https://static.wixstatic.com/media/${fileName}`
+        );
+      } catch (e) {
+        console.error(`Upload failed for ${fileName}:`, e);
+        return null;
       }
-    );
+    };
 
-    if (!uploadUrlRes.ok) {
-      const errText = await uploadUrlRes.text();
-      console.error("Wix upload URL error:", errText);
+    const safeName = (fullName || "customer")
+      .replace(/[^a-zA-Z0-9]/g, "_")
+      .substring(0, 30);
+    const pdfName = `waiver_${safeName}_${Date.now()}.pdf`;
+    const sigName = `sig_${safeName}_${Date.now()}.png`;
 
-      // Fallback: return PDF as base64 data URI
-      const base64Pdf = pdfBuffer.toString("base64");
-      return NextResponse.json({
-        success: true,
-        pdfUrl: `data:application/pdf;base64,${base64Pdf.substring(0, 100)}...`,
-        pdfBase64: base64Pdf,
-        fallback: true,
-        message: "PDF generated but Wix upload failed, using base64 fallback",
-      });
+    const signatureBuffer =
+      signatureBase64 ?
+        Buffer.from(signatureBase64.split(",")[1], "base64")
+      : null;
+
+    const [pdfUrl, sigUrl] = await Promise.all([
+      uploadToWix(pdfBuffer, pdfName, "application/pdf"),
+      signatureBuffer ?
+        uploadToWix(signatureBuffer, sigName, "image/png")
+      : Promise.resolve(null),
+    ]);
+
+    if (pdfUrl) {
+      try {
+        const formatPhone = (p) => {
+          if (!p) return undefined;
+          const cleaned = String(p).replace(/\D/g, "");
+          if (cleaned.length === 0) return p;
+          if (cleaned.length === 10) return `+1${cleaned}`;
+          return p.startsWith("+") ? p : `+${cleaned}`;
+        };
+
+        const formattedPhone = formatPhone(phone);
+
+        const nameParts = (fullName || "").trim().split(/\s+/);
+        const firstName = nameParts[0] || "Customer";
+        const lastName =
+          nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
+
+        const contactPayload = {
+          info: {
+            name: { first: firstName, last: lastName },
+            emails: { items: [{ email: email, tag: "MAIN" }] },
+          },
+        };
+
+        if (formattedPhone) {
+          contactPayload.info.phones = {
+            items: [{ phone: formattedPhone, tag: "MOBILE" }],
+          };
+        }
+
+        let contactId = null;
+        try {
+          const contactResponse = await fetch(
+            "https://www.wixapis.com/contacts/v4/contacts",
+            {
+              method: "POST",
+              headers,
+              body: JSON.stringify(contactPayload),
+            },
+          );
+
+          const contactData = await contactResponse.json();
+          if (contactResponse.ok) {
+            contactId = contactData.contact?.id || contactData.id;
+          } else {
+            console.warn("Wix Contact Creation Warning:", contactData);
+          }
+        } catch (contactErr) {
+          console.warn(
+            "Wix Contact Creation failed, continuing:",
+            contactErr.message,
+          );
+        }
+
+        const submissionPayload = {
+          submission: {
+            formId: "1ce6728e-dd5b-4c48-88ac-0f30abce6a0d",
+            namespace: "wix.form_app.form",
+            contactId: contactId,
+            status: "CONFIRMED",
+            submissions: {
+              full_name: fullName,
+              address_f460: address,
+              email_464e: email,
+              phone_e572: formattedPhone,
+              vehicle_make_model: vehicleMakeModel,
+              vin_serial: vinSerial,
+              message: `Waiver PDF: ${pdfUrl}`,
+              signature_1: sigUrl || "Base64 provided in PDF",
+            },
+          },
+        };
+
+        const formResponse = await fetch(
+          "https://www.wixapis.com/form-submission-service/v4/submissions",
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify(submissionPayload),
+          },
+        );
+
+        const formResult = await formResponse.json();
+        console.log("Wix Form submission result:", formResult);
+
+        if (contactId) {
+          try {
+            const { wixClient } = await import("@/lib/wixClient");
+            const noteContent =
+              `--- Waiver Form Submission ---\n` +
+              `Name: ${fullName}\n` +
+              `Address: ${address}\n` +
+              `Email: ${email}\n` +
+              `Phone: ${formattedPhone}\n` +
+              `Vehicle: ${vehicleMakeModel}\n` +
+              `VIN/Serial: ${vinSerial}\n` +
+              `Waiver PDF: ${pdfUrl}\n` +
+              `Signature: ${sigUrl || "Base64 provided in PDF"}`;
+
+            await wixClient.contacts.createNote(contactId, {
+              content: noteContent,
+            });
+            console.log("Fallback note added to contact successfully.");
+          } catch (noteErr) {
+            console.warn("Could not add fallback note:", noteErr.message);
+          }
+        }
+      } catch (formErr) {
+        console.error("Wix Form submission error:", formErr);
+      }
     }
-
-    const uploadUrlData = await uploadUrlRes.json();
-    const uploadUrl = uploadUrlData.uploadUrl;
-
-    // Step 2b: Upload the PDF binary
-    const formData = new FormData();
-    const pdfBlob = new Blob([pdfBuffer], { type: "application/pdf" });
-    formData.append("file", pdfBlob, fileName);
-
-    const uploadRes = await fetch(uploadUrl, {
-      method: "PUT",
-      body: pdfBuffer,
-      headers: {
-        "Content-Type": "application/pdf",
-      },
-    });
-
-    if (!uploadRes.ok) {
-      const uploadErr = await uploadRes.text();
-      console.error("Wix file upload error:", uploadErr);
-
-      // Fallback
-      const base64Pdf = pdfBuffer.toString("base64");
-      return NextResponse.json({
-        success: true,
-        pdfBase64: base64Pdf,
-        fallback: true,
-        message: "PDF generated but file upload failed",
-      });
-    }
-
-    const uploadResult = await uploadRes.json();
-    const fileUrl =
-      uploadResult.file?.url ||
-      uploadResult.file?.fileUrl ||
-      uploadResult.url ||
-      `https://static.wixstatic.com/media/${fileName}`;
-
-    console.log("Waiver PDF uploaded to Wix:", fileUrl);
 
     return NextResponse.json({
       success: true,
-      pdfUrl: fileUrl,
-      fileName: fileName,
+      pdfUrl: pdfUrl || "Fallback to base64",
+      pdfBase64: pdfUrl ? undefined : pdfBuffer.toString("base64"),
+      sigUrl,
     });
   } catch (err) {
     console.error("Waiver upload error:", err);
     return NextResponse.json(
       { error: err.message || "Failed to generate waiver PDF" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -10,7 +10,6 @@ export async function POST(req) {
   try {
     const { messages } = await req.json();
 
-    // Fetch products to give context to the AI
     const productRes = await wixClient.products
       .queryProducts()
       .limit(50)
