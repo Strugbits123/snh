@@ -190,7 +190,7 @@ export default function ProductDetail() {
                 <img
                   src={images[activeImage]}
                   alt={cart.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               )}
               {images.length > 1 && (
@@ -226,7 +226,7 @@ export default function ProductDetail() {
                       i === activeImage ? "border-accent" : "border-transparent"
                     )}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <img src={img} alt="" className="w-full h-full object-contain" />
                   </button>
                 ))}
               </div>
