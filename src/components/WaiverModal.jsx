@@ -86,12 +86,29 @@ export default function WaiverModal({
 
   const validateStep0 = () => {
     const errs = {};
-    if (!formData.fullName.trim()) errs.fullName = "Required";
+    if (!formData.fullName.trim()) {
+      errs.fullName = "Required";
+    } else if (!/^[a-zA-Z\s]+$/.test(formData.fullName)) {
+      errs.fullName = "Only alphabets and spaces allowed";
+    }
+
     if (!formData.address.trim()) errs.address = "Required";
-    if (!formData.phone.trim()) errs.phone = "Required";
-    if (!formData.email.trim()) errs.email = "Required";
+
+    if (!formData.phone.trim()) {
+      errs.phone = "Required";
+    } else if (!/^\d+$/.test(formData.phone.replace(/[-\s()]/g, ""))) {
+      errs.phone = "Only digits allowed";
+    }
+
+    if (!formData.email.trim()) {
+      errs.email = "Required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errs.email = "Invalid email format";
+    }
+
     if (!formData.vehicleMakeModel.trim()) errs.vehicleMakeModel = "Required";
     if (!formData.vinSerial.trim()) errs.vinSerial = "Required";
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };

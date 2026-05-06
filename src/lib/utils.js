@@ -34,7 +34,7 @@ export function extractProductDetails(product, collections = []) {
   const productCollectionIds = product.collectionIds || [];
   const productCollections = collections.filter(c => productCollectionIds.includes(c._id || c.id));
   
-  let brand = "Evolution"; // Default fallback
+  let brand = ""; // Default fallback
   let isAccessory = false;
 
   // 1. Identify if it's an accessory and find the most relevant brand
@@ -56,6 +56,11 @@ export function extractProductDetails(product, collections = []) {
       brand = coll.name; // Use the actual name from Wix (preserves casing)
     }
   });
+
+  // Default to Evolution for carts if no brand found, but NOT for accessories
+  if (!brand && !isAccessory) {
+    brand = "Evolution";
+  }
 
   // Clean up name if it starts with brand (only for display, preserving original for filters if needed)
   let displayName = name;
