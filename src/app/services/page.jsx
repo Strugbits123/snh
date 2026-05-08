@@ -14,6 +14,9 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import CTASection from "@/components/CTASection";
+import WaiverModal from "@/components/WaiverModal";
+import { wixProxy } from "@/lib/wixProxy";
+import { extractProductDetails } from "@/lib/utils";
 
 const ICON_MAP = {
   Wrench,
@@ -28,6 +31,10 @@ const HERO_IMAGE =
 export default function Services() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showWaiver, setShowWaiver] = useState(false);
+  const [waiverSubmitting, setWaiverSubmitting] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [vehicles, setVehicles] = useState([]);
 
   useEffect(() => {
     const defaultServices = [
@@ -131,6 +138,112 @@ export default function Services() {
     }
   }, [loading]);
 
+  useEffect(() => {
+    fetch("/api/products")
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.products) {
+          console.log("Products==>", res.products)
+           const vehicleData = res.products
+             .map((p) => extractProductDetails(p, res.collections || []))
+             .filter(
+               (p) =>
+                 !p.isAccessory &&
+                 p.fullName?.toLowerCase() !== "speed upgrade service",
+             )
+             .map((p) => ({ name: p.fullName, isLSV: p.isLSV }))
+             .filter((p) => p.name);
+           
+           // Deduplicate by name
+           const uniqueVehicles = [];
+           const seen = new Set();
+           vehicleData.forEach(v => {
+             if (!seen.has(v.name)) {
+               seen.add(v.name);
+               uniqueVehicles.push(v);
+             }
+           });
+
+           setVehicles(uniqueVehicles.sort((a, b) => a.name.localeCompare(b.name)));
+        }
+      })
+      .catch((err) => console.error("Error fetching vehicles:", err));
+  }, []);
+
+  const handleWaiverSubmit = async (waiverData) => {
+    setWaiverSubmitting(true);
+    setCheckoutLoading(true);
+    try {
+      // 1. Upload Waiver
+      const waiverRes = await fetch("/api/waiver-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(waiverData),
+      });
+      const waiverResult = await waiverRes.json();
+      const waiverPdfUrl =
+        waiverResult.pdfUrl || waiverResult.pdfBase64 || "Waiver submitted";
+
+      // 2. Fetch "Speed Upgrade" product
+      let speedProduct = null;
+      try {
+        // Use a filtered query for exact name match (case-sensitive in Wix)
+        const productsData = await wixProxy("products", "query", {
+          filters: { name: "Speed Upgrade Service" }
+        });
+
+        // Handle both 'items' and '_items' to be safe
+        speedProduct = (productsData.items || productsData._items)?.[0];
+
+        // Fallback: If exact match fails, try a broader search with a higher limit
+        if (!speedProduct) {
+          const allProducts = await wixProxy("products", "query", { limit: 100 });
+          speedProduct = (allProducts.items || allProducts._items)?.find(
+            (p) => p.name?.toLowerCase().includes("speed upgrade service")
+          );
+        }
+      } catch (err) {
+        console.warn("Failed to fetch speed product from Wix:", err);
+      }
+
+      if (!speedProduct) {
+        alert("The 'Speed Upgrade Service' product was not found in Wix. Please ensure it is created as described in the instructions.");
+        setCheckoutLoading(false);
+        setWaiverSubmitting(false);
+        return;
+      }
+
+      // 3. Initiate Checkout
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: speedProduct.id || speedProduct._id,
+          quantity: 1,
+          productName: speedProduct.name,
+          productPrice: speedProduct.priceData?.price,
+          productImage: speedProduct.media?.mainMedia?.image?.url || "/images/services/upgrades.png",
+          waiverPdfUrl: waiverPdfUrl,
+          waiverCustomerName: waiverData.fullName,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        alert("Unable to start checkout. Please call us at 603-777-7831.");
+        setCheckoutLoading(false);
+        setWaiverSubmitting(false);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred. Please call us at 603-777-7831 to complete your upgrade.");
+      setCheckoutLoading(false);
+      setWaiverSubmitting(false);
+    }
+  };
+
   return (
     <div>
       <section className="relative pt-32 pb-20 bg-foreground text-white overflow-hidden">
@@ -165,7 +278,7 @@ export default function Services() {
             <div className="flex justify-center py-20">
               <Loader2 className="w-8 h-8 animate-spin text-accent" />
             </div>
-          : <div className="space-y-32">
+            : <div className="space-y-32">
               {services.map((service, i) => {
                 const Icon = ICON_MAP[service.icon] || Wrench;
                 const isReversed = i % 2 !== 0;
@@ -210,12 +323,34 @@ export default function Services() {
                         </div>
                       )}
 
-                      <Link href={service.cta_link}>
-                        <Button className="bg-accent hover:bg-accent/90 text-white rounded-full px-10 py-6 text-lg">
-                          {service.cta_text}
-                          <ArrowRight className="w-5 h-5 ml-2" />
-                        </Button>
-                      </Link>
+                      <div className="flex flex-col sm:flex-row items-center gap-4">
+                        {service.slug === "upgrades" && (
+                          <Button
+                            onClick={() => setShowWaiver(true)}
+                            disabled={checkoutLoading}
+                            className="bg-accent hover:bg-accent/90 text-white rounded-full px-10 py-6 text-lg shadow-lg shadow-accent/20 transition-all duration-300 group"
+                          >
+                            {checkoutLoading ?
+                              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            : <Sparkles className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />}
+                            Speed Upgrade Service
+                          </Button>
+                        )}
+                        <Link href={service.cta_link} className={service.slug === "upgrades" ? "w-full sm:w-auto" : ""}>
+                          <Button
+                            variant={service.slug === "upgrades" ? "outline" : "default"}
+                            className={(
+                              "rounded-full px-10 py-6 text-lg w-full transition-all duration-300",
+                              service.slug === "upgrades"
+                                ? "border-accent/30 text-accent hover:bg-accent hover:text-white hover:border-accent"
+                                : "bg-accent hover:bg-accent/90 text-white shadow-lg shadow-accent/20"
+                            )}
+                          >
+                            {service.cta_text}
+                            <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
 
                     <div
@@ -239,6 +374,18 @@ export default function Services() {
       </section>
 
       <CTASection />
+
+      <WaiverModal
+        isOpen={showWaiver}
+        onClose={() => {
+          setShowWaiver(false);
+          setCheckoutLoading(false);
+        }}
+        onSubmit={handleWaiverSubmit}
+        vehicleMakeModel=""
+        isSubmitting={waiverSubmitting}
+        vehicles={vehicles}
+      />
     </div>
   );
 }

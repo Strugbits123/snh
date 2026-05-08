@@ -189,12 +189,16 @@ export async function POST(req) {
     let customFields = [];
     console.log("Waiver PDF URL==>", waiverPdfUrl);
     if (waiverPdfUrl) {
-      customFields = [
-        {
-          title: "Waiver PDF",
-          value: waiverPdfUrl,
-        },
-      ];
+      customFields.push({
+        title: "Waiver PDF",
+        value: waiverPdfUrl,
+      });
+    }
+    if (waiverCustomerName) {
+      customFields.push({
+        title: "Waiver Signer",
+        value: waiverCustomerName,
+      });
     }
 
     const checkoutPayload = {

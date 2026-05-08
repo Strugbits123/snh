@@ -1,5 +1,5 @@
-"use client";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import SignatureCanvas from "react-signature-canvas";
 import {
   Shield,
   ChevronRight,
@@ -14,17 +14,17 @@ import {
 const LEGAL_TERMS = [
   {
     title: "New Hampshire Legal Acknowledgment",
-    body: "I understand that Low Speed Vehicles (LSVs) are generally limited to 25 mph under New Hampshire law. Modifying the vehicle's speed beyond this limit may make the vehicle illegal for use on public roads.",
+    body: "I understand that Low Speed Vehicles (LSVs) are limited to 25 mph under New Hampshire law. Modifying the vehicle's speed beyond this limit will make the vehicle illegal for use on public roads.",
     icon: "scale",
   },
   {
     title: "Speed Modification Disclosure",
-    body: "I acknowledge the following: The requested speed increase may exceed 25 mph. This may exceed legal limits for LSVs. The modified vehicle may be illegal to operate on public roads. Use may be restricted to private property only.",
+    body: "I acknowledge the following: The requested speed increase will exceed 25 mph. This will exceed legal limits for LSVs. The modified vehicle will be illegal to operate on public roads. Use will be restricted to private property only.",
     icon: "gauge",
   },
   {
     title: "Warranty & Mechanical Risk",
-    body: "I understand that speed modifications may void the manufacturer's warranty. Increased wear and tear on components is expected. SNH Golf Carts LLC makes no guarantees regarding the long-term reliability of modified components.",
+    body: "I understand that speed modifications will void the manufacturer's warranty. Increased wear and tear on components is expected. SNH Golf Carts LLC makes no guarantees regarding the long-term reliability of modified components.",
     icon: "wrench",
   },
   {
@@ -34,7 +34,7 @@ const LEGAL_TERMS = [
   },
   {
     title: "Insurance Coverage",
-    body: "Insurance may not cover modified vehicles. It is my responsibility to verify coverage with my insurance provider before operating the modified vehicle.",
+    body: "Insurance will not cover modified vehicles. It is my responsibility to verify coverage with my insurance provider before operating the modified vehicle.",
     icon: "shield",
   },
   {
@@ -48,8 +48,9 @@ export default function WaiverModal({
   isOpen,
   onClose,
   onSubmit,
-  vehicleMakeModel,
-  isSubmitting,
+  vehicleMakeModel = "",
+  isSubmitting = false,
+  vehicles = [],
 }) {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -64,14 +65,16 @@ export default function WaiverModal({
   const [initials, setInitials] = useState(["", "", "", "", "", ""]);
   const [signatureFile, setSignatureFile] = useState(null);
   const [signaturePreview, setSignaturePreview] = useState(null);
+  const [signatureType, setSignatureType] = useState("canvas"); // "canvas" or "upload"
   const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
+  const signaturePadRef = useRef(null);
 
   const totalSteps = 8;
   const progressSegment =
     step < 1 ? 0
-    : step <= 6 ? 1
-    : 2;
+      : step <= 6 ? 1
+        : 2;
 
   const updateField = useCallback((field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -105,8 +108,23 @@ export default function WaiverModal({
       errs.email = "Invalid email format";
     }
 
-    if (!formData.vehicleMakeModel.trim()) errs.vehicleMakeModel = "Required";
-    if (!formData.vinSerial.trim()) errs.vinSerial = "Required";
+    if (!formData.vehicleMakeModel.trim()) {
+      errs.vehicleMakeModel = "Required";
+    }
+
+    if (!formData.vinSerial.trim()) {
+      errs.vinSerial = "Required";
+    } else {
+      const selectedVehicle = vehicles.find(
+        (v) => v.name === formData.vehicleMakeModel,
+      );
+      if (selectedVehicle?.isLSV) {
+        const vinClean = formData.vinSerial.trim().replace(/[\s-]/g, "");
+        if (vinClean.length !== 17) {
+          errs.vinSerial = "LSV requires exactly 17 digit VIN";
+        }
+      }
+    }
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -154,14 +172,25 @@ export default function WaiverModal({
   };
 
   const handleSubmit = () => {
-    if (!signatureFile) {
-      setErrors({ signature: "Please upload your signature" });
+    let finalSignature = signaturePreview;
+
+    if (signatureType === "canvas" && signaturePadRef.current) {
+      if (signaturePadRef.current.isEmpty()) {
+        setErrors({ signature: "Please sign in the pad provided" });
+        return;
+      }
+      finalSignature = signaturePadRef.current
+        .getTrimmedCanvas()
+        .toDataURL("image/png");
+    } else if (!signatureFile) {
+      setErrors({ signature: "Please upload your signature photo" });
       return;
     }
+
     onSubmit({
       ...formData,
       initials,
-      signatureBase64: signaturePreview,
+      signatureBase64: finalSignature,
     });
   };
 
@@ -290,6 +319,7 @@ export default function WaiverModal({
               formData={formData}
               updateField={updateField}
               errors={errors}
+              vehicles={vehicles}
             />
           )}
           {step >= 1 && step <= 6 && (
@@ -305,6 +335,9 @@ export default function WaiverModal({
             <StepFinal
               signaturePreview={signaturePreview}
               fileInputRef={fileInputRef}
+              signaturePadRef={signaturePadRef}
+              signatureType={signatureType}
+              setSignatureType={setSignatureType}
               onFileChange={handleSignatureChange}
               error={errors.signature}
             />
@@ -356,7 +389,7 @@ export default function WaiverModal({
                   background:
                     step === 0 ?
                       "linear-gradient(135deg, #00bfff, #0088cc)"
-                    : "rgba(255,255,255,0.95)",
+                      : "rgba(255,255,255,0.95)",
                   color: step === 0 ? "#fff" : "#111",
                   fontSize: 14,
                   fontWeight: 600,
@@ -378,12 +411,12 @@ export default function WaiverModal({
                   <>
                     Review Legal Terms <ChevronRight size={16} />
                   </>
-                : <>
+                  : <>
                     I Understand & Agree <CheckCircle2 size={16} />
                   </>
                 }
               </button>
-            : <button
+              : <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 style={{
@@ -412,7 +445,7 @@ export default function WaiverModal({
                     />{" "}
                     Processing...
                   </>
-                : <>
+                  : <>
                     <CheckCircle2 size={16} /> Complete & Submit
                   </>
                 }
@@ -466,7 +499,7 @@ export default function WaiverModal({
 }
 
 /* ─── Step 0: Customer Info ─── */
-function StepInfo({ formData, updateField, errors }) {
+function StepInfo({ formData, updateField, errors, vehicles = [] }) {
   const fieldStyle = (hasError) => ({
     width: "100%",
     padding: "12px 14px",
@@ -495,7 +528,7 @@ function StepInfo({ formData, updateField, errors }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Row: Name + Address */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
         <div>
           <label style={labelStyle}>Full Name</label>
           <input
@@ -533,7 +566,7 @@ function StepInfo({ formData, updateField, errors }) {
       </div>
 
       {/* Row: Phone + Email */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
         <div>
           <label style={labelStyle}>Phone Number</label>
           <input
@@ -585,25 +618,56 @@ function StepInfo({ formData, updateField, errors }) {
           Vehicle Details
         </p>
         <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}
         >
           <div>
             <label style={labelStyle}>Make / Model</label>
-            <input
-              style={fieldStyle(errors.vehicleMakeModel)}
-              placeholder="e.g. Apollo Gen2"
-              value={formData.vehicleMakeModel}
-              onChange={(e) => updateField("vehicleMakeModel", e.target.value)}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#00bfff";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor =
-                  errors.vehicleMakeModel ? "#ff4444" : (
-                    "rgba(255,255,255,0.08)"
-                  );
-              }}
-            />
+            {vehicles.length > 0 ? (
+              <select
+                style={{
+                  ...fieldStyle(errors.vehicleMakeModel),
+                  appearance: "none",
+                  cursor: "pointer",
+                  backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")`,
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 10px center",
+                }}
+                value={formData.vehicleMakeModel}
+                onChange={(e) => updateField("vehicleMakeModel", e.target.value)}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#00bfff";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = errors.vehicleMakeModel
+                    ? "#ff4444"
+                    : "rgba(255,255,255,0.08)";
+                }}
+              >
+                <option value="">Select Vehicle</option>
+                {vehicles.map((v) => (
+                  <option key={v.name} value={v.name}>
+                    {v.name}
+                  </option>
+                ))}
+
+              </select>
+            ) : (
+              <input
+                style={fieldStyle(errors.vehicleMakeModel)}
+                placeholder="e.g. Apollo Gen2"
+                value={formData.vehicleMakeModel}
+                onChange={(e) => updateField("vehicleMakeModel", e.target.value)}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#00bfff";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor =
+                    errors.vehicleMakeModel ? "#ff4444" : (
+                      "rgba(255,255,255,0.08)"
+                    );
+                }}
+              />
+            )}
             {errors.vehicleMakeModel && (
               <p style={errorStyle}>{errors.vehicleMakeModel}</p>
             )}
@@ -767,7 +831,15 @@ function StepTerm({ term, termIndex, initial, onInitialChange, error }) {
 }
 
 /* ─── Step 7: Final Acknowledgment ─── */
-function StepFinal({ signaturePreview, fileInputRef, onFileChange, error }) {
+function StepFinal({
+  signaturePreview,
+  fileInputRef,
+  signaturePadRef,
+  signatureType,
+  setSignatureType,
+  onFileChange,
+  error,
+}) {
   return (
     <div
       style={{
@@ -801,73 +873,154 @@ function StepFinal({ signaturePreview, fileInputRef, onFileChange, error }) {
           Final Acknowledgment
         </h3>
         <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, margin: 0 }}>
-          Please upload a clear photo of your handwritten signature.
+          {signatureType === "canvas" ?
+            "Sign directly on the screen below."
+            : "Please upload a clear photo of your handwritten signature."}
         </p>
       </div>
 
-      {/* Upload area */}
-      <button
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
+      {/* Tabs for Signature Type */}
+      <div
         style={{
-          width: "100%",
-          padding: signaturePreview ? 8 : 40,
-          background: "#1a1a2e",
-          border: `2px dashed ${error ? "#ff4444" : "rgba(0,191,255,0.25)"}`,
-          borderRadius: 14,
-          cursor: "pointer",
           display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
           gap: 8,
-          transition: "all 0.2s",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = "#00bfff";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor =
-            error ? "#ff4444" : "rgba(0,191,255,0.25)";
+          background: "rgba(255,255,255,0.05)",
+          padding: 4,
+          borderRadius: 12,
+          width: "100%",
         }}
       >
-        {signaturePreview ?
-          <img
-            src={signaturePreview}
-            alt="Signature"
-            style={{ maxWidth: "100%", maxHeight: 120, borderRadius: 8 }}
-          />
+        <button
+          onClick={() => setSignatureType("canvas")}
+          style={{
+            flex: 1,
+            padding: "8px 12px",
+            borderRadius: 8,
+            border: "none",
+            background: signatureType === "canvas" ? "#00bfff" : "transparent",
+            color: signatureType === "canvas" ? "#fff" : "rgba(255,255,255,0.6)",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+        >
+          Digital Sign
+        </button>
+        <button
+          onClick={() => setSignatureType("upload")}
+          style={{
+            flex: 1,
+            padding: "8px 12px",
+            borderRadius: 8,
+            border: "none",
+            background: signatureType === "upload" ? "#00bfff" : "transparent",
+            color: signatureType === "upload" ? "#fff" : "rgba(255,255,255,0.6)",
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            transition: "all 0.2s",
+          }}
+        >
+          Upload Photo
+        </button>
+      </div>
+
+      {signatureType === "canvas" ?
+        <div style={{ width: "100%", position: "relative" }}>
+          <div
+            style={{
+              width: "100%",
+              height: 200,
+              background: "#fff",
+              borderRadius: 14,
+              overflow: "hidden",
+              border: `2px solid ${error ? "#ff4444" : "rgba(0,191,255,0.25)"}`,
+            }}
+          >
+            <SignatureCanvas
+              ref={signaturePadRef}
+              penColor="black"
+              canvasProps={{
+                style: { width: "100%", height: "100%" },
+                className: "sigCanvas",
+              }}
+            />
+          </div>
+          <button
+            onClick={() => signaturePadRef.current?.clear()}
+            style={{
+              marginTop: 8,
+              fontSize: 12,
+              color: "#00bfff",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontWeight: 600,
+              textDecoration: "underline",
+            }}
+          >
+            Clear Signature
+          </button>
+        </div>
         : <>
-            <Upload size={28} color="rgba(255,255,255,0.35)" />
-            <p
-              style={{
-                color: "rgba(255,255,255,0.6)",
-                fontSize: 14,
-                fontWeight: 600,
-                margin: 0,
-              }}
-            >
-              Tap to Upload Photo
-            </p>
-            <p
-              style={{
-                color: "rgba(255,255,255,0.3)",
-                fontSize: 12,
-                margin: 0,
-              }}
-            >
-              PNG, JPG or JPEG
-            </p>
-          </>
-        }
-      </button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/png,image/jpeg,image/jpg"
-        onChange={onFileChange}
-        style={{ display: "none" }}
-      />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              width: "100%",
+              padding: signaturePreview ? 8 : 40,
+              background: "#1a1a2e",
+              border: `2px dashed ${error ? "#ff4444" : "rgba(0,191,255,0.25)"}`,
+              borderRadius: 14,
+              cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              transition: "all 0.2s",
+            }}
+          >
+            {signaturePreview ?
+              <img
+                src={signaturePreview}
+                alt="Signature"
+                style={{ maxWidth: "100%", maxHeight: 120, borderRadius: 8 }}
+              />
+              : <>
+                <Upload size={28} color="rgba(255,255,255,0.35)" />
+                <p
+                  style={{
+                    color: "rgba(255,255,255,0.6)",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    margin: 0,
+                  }}
+                >
+                  Tap to Upload Photo
+                </p>
+                <p
+                  style={{
+                    color: "rgba(255,255,255,0.3)",
+                    fontSize: 12,
+                    margin: 0,
+                  }}
+                >
+                  PNG, JPG or JPEG
+                </p>
+              </>
+            }
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/jpg"
+            onChange={onFileChange}
+            style={{ display: "none" }}
+          />
+        </>
+      }
 
       {error && <p style={{ color: "#ff4444", fontSize: 12 }}>{error}</p>}
 

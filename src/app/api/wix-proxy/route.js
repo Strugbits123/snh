@@ -20,6 +20,9 @@ export async function POST(req) {
             query = query.eq(key, val);
           });
         }
+        if (args[0]?.limit) {
+          query = query.limit(args[0].limit);
+        }
         result = await query.find();
       }
     } else if (module === "posts") {

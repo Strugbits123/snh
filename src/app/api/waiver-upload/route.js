@@ -98,15 +98,15 @@ export async function POST(req) {
     const terms = [
       {
         title: "New Hampshire Legal Acknowledgment",
-        text: "I understand LSVs are generally limited to 25 mph and modifying speed may make the vehicle illegal for public road use.",
+        text: "I understand LSVs are limited to 25 mph and modifying speed will make the vehicle illegal for public road use.",
       },
       {
         title: "Speed Modification Disclosure",
-        text: "Requested speed increase beyond 25 mph. May exceed legal limits. May be illegal on public roads. May be restricted to private property.",
+        text: "Requested speed increase beyond 25 mph. Will exceed legal limits. Will be illegal on public roads. Will be restricted to private property.",
       },
       {
         title: "Warranty & Mechanical Risk",
-        text: "May void warranties. Increased wear and tear. No reliability guarantees.",
+        text: "Will void warranties. Increased wear and tear. No reliability guarantees.",
       },
       {
         title: "Assumption of Risk",
@@ -114,7 +114,7 @@ export async function POST(req) {
       },
       {
         title: "Insurance Responsibility",
-        text: "Insurance may not cover modified vehicle. Responsible to verify coverage.",
+        text: "Insurance will not cover modified vehicle. Responsible to verify coverage.",
       },
       {
         title: "Hold Harmless",

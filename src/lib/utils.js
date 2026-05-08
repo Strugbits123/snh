@@ -43,10 +43,11 @@ export function extractProductDetails(product, collections = []) {
       isAccessory = true;
     }
 
-    const isNotSystem = !["all", "all products", "accessories"].includes(
+    const isNotSystem = !["all", "all products", "accessories","live carts"].includes(
       collName,
     );
     const isNotSeries = !collName.includes("series");
+    
 
     if (isNotSystem && isNotSeries) {
       brand = coll.name;
@@ -108,6 +109,12 @@ export function extractProductDetails(product, collections = []) {
       details.seats = parseInt(sMatch[1]);
     }
   }
+
+  const lsvSection = (product.additionalInfoSections || []).find(
+    (s) => s.title?.toLowerCase() === "lsv",
+  );
+  details.isLSV =
+    lsvSection?.description?.toLowerCase().includes("true") || false;
 
   if (!details.seats) {
     const seatMatch =

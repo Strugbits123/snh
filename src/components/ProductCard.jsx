@@ -33,6 +33,11 @@ export default function ProductCard({ cart: inputCart, index = 0 }) {
                 Out of Stock
               </Badge>
             )}
+            {cart.isLSV && (
+              <Badge className="bg-accent text-white border-0 text-xs">
+                LSV
+              </Badge>
+            )}
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         </div>

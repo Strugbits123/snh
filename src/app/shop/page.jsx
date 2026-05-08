@@ -37,11 +37,15 @@ function ShopContent() {
       .then((r) => r.json())
       .then((res) => {
         const rawItems = res.products || [];
+        console.log("RawItems==>",rawItems)
         const collections = res.collections || [];
-
-        const processed = rawItems.map((item) =>
-          extractProductDetails(item, collections),
-        );
+console.log("Collections==>",collections)
+        const processed = rawItems
+          .filter(
+            (item) =>
+              item.name?.toLowerCase() !== "speed upgrade service",
+          )
+          .map((item) => extractProductDetails(item, collections));
 
         const sorted = processed.sort((a, b) => {
           if (a.inStock && !b.inStock) return -1;

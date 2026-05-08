@@ -25,7 +25,6 @@ import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
 import { extractProductDetails, cn } from "@/lib/utils";
 import FinancingBadge from "@/components/FinancingBadge";
-import WaiverModal from "@/components/WaiverModal";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -35,8 +34,6 @@ export default function ProductDetail() {
   const [activeImage, setActiveImage] = useState(0);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState({});
-  const [showWaiver, setShowWaiver] = useState(false);
-  const [waiverSubmitting, setWaiverSubmitting] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -81,23 +78,9 @@ export default function ProductDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleCardCheckout = () => {
-    setShowWaiver(true);
-  };
-
-  const handleWaiverSubmit = async (waiverData) => {
-    setWaiverSubmitting(true);
+  const handleCardCheckout = async () => {
     setCheckoutLoading(true);
     try {
-      const waiverRes = await fetch("/api/waiver-upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(waiverData),
-      });
-      const waiverResult = await waiverRes.json();
-      const waiverPdfUrl =
-        waiverResult.pdfUrl || waiverResult.pdfBase64 || "Waiver submitted";
-
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -108,8 +91,6 @@ export default function ProductDetail() {
           productPrice: cart.price,
           productImage: cart.image,
           options: selectedOptions,
-          waiverPdfUrl: waiverPdfUrl,
-          waiverCustomerName: waiverData.fullName,
         }),
       });
       const data = await res.json();
@@ -134,13 +115,11 @@ export default function ProductDetail() {
       } else {
         alert("Unable to start checkout. Please call us or try again.");
         setCheckoutLoading(false);
-        setWaiverSubmitting(false);
       }
     } catch (err) {
       console.error(err);
       alert("Unable to start checkout. Please call us or try again.");
       setCheckoutLoading(false);
-      setWaiverSubmitting(false);
     }
   };
 
@@ -165,7 +144,7 @@ export default function ProductDetail() {
     );
   }
 
-  const images = [cart.image, ...cart.gallery].filter(Boolean);
+  const images = [...new Set([cart.image, ...cart.gallery])].filter(Boolean);
 
   const specs = [
     {
@@ -373,18 +352,6 @@ export default function ProductDetail() {
             </div>
           </motion.div>
         </div>
-
-        {/* Waiver Modal */}
-        <WaiverModal
-          isOpen={showWaiver}
-          onClose={() => {
-            setShowWaiver(false);
-            setCheckoutLoading(false);
-          }}
-          onSubmit={handleWaiverSubmit}
-          vehicleMakeModel={`${cart.brand || ""} ${cart.name}`.trim()}
-          isSubmitting={waiverSubmitting}
-        />
 
         {/* Full Description */}
         {cart.description && (
