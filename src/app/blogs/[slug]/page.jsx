@@ -130,15 +130,15 @@ export default function BlogDetail() {
        
         
            */}
-  {post.coverImage && (
-            <div className="relative rounded-3xl overflow-hidden aspect-[16/7] bg-muted mb-10">
+          {post.coverImage && (
+            <div className="relative rounded-3xl overflow-hidden bg-muted mb-10 flex justify-center">
               <img
                 src={post.coverImage}
                 alt={post.title}
-                className="w-full h-full object-cover"
+                className="max-w-full h-auto max-h-[500px] object-contain"
               />
             </div>
-          )} 
+          )}
           {/* Article Content — rich content preferred, plain text as fallback */}
           {post.richContent ?
             <RichContentRenderer richContent={post.richContent} />

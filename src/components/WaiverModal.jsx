@@ -493,6 +493,10 @@ export default function WaiverModal({
         @keyframes spin {
           to { transform: rotate(360deg); }
         }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+          cursor: pointer;
+        }
       `}</style>
     </div>
   );
@@ -631,6 +635,10 @@ function StepInfo({ formData, updateField, errors, vehicles = [] }) {
                   backgroundImage: `url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")`,
                   backgroundRepeat: "no-repeat",
                   backgroundPosition: "right 10px center",
+                  paddingRight: "40px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                 }}
                 value={formData.vehicleMakeModel}
                 onChange={(e) => updateField("vehicleMakeModel", e.target.value)}
@@ -704,7 +712,7 @@ function StepInfo({ formData, updateField, errors, vehicles = [] }) {
             e.target.style.borderColor = "#00bfff";
           }}
           onBlur={(e) => {
-            e.target.style.borderColor = "rgba(255,255,255,0.08)";
+            e.target.style.borderColor = "rgba(255, 255, 255, 0.08)";
           }}
         />
       </div>
