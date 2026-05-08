@@ -103,7 +103,7 @@ export default function Services() {
           "Lift kits & all-terrain tires",
           "LED light bars, headlights & sound systems",
           "Custom seats, enclosures & wraps",
-          "Speed controllers & performance upgrades",
+         
         ],
         cta_text: "Plan Your Upgrade",
         cta_link: "/contact",
@@ -323,17 +323,19 @@ export default function Services() {
                         </div>
                       )}
 
-                      <div className="flex flex-col sm:flex-row items-center gap-4">
+                      <div className="flex flex-col items-start gap-4">
                         {service.slug === "upgrades" && (
                           <Button
                             onClick={() => setShowWaiver(true)}
                             disabled={checkoutLoading}
-                            className="bg-accent hover:bg-accent/90 text-white rounded-full px-10 py-6 text-lg shadow-lg shadow-accent/20 transition-all duration-300 group"
+                         
+                            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-9 px-4 py-2 bg-accent hover:bg-accent/90 text-white shadow-lg shadow-accent/20"
                           >
-                            {checkoutLoading ?
+                            {checkoutLoading &&
                               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            : <Sparkles className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />}
-                            Speed Upgrade Service
+                            }
+                            Speed Controller & Performance Upgrade
+                            <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
                           </Button>
                         )}
                         <Link href={service.cta_link} className={service.slug === "upgrades" ? "w-full sm:w-auto" : ""}>

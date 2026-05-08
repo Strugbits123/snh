@@ -183,5 +183,6 @@ export function extractBlogDetails(post) {
       post.firstPublishedDate || post.lastUpdatedDate || post._createdDate,
     minutesToRead: post.minutesToRead || 5,
     featured: post.featured || false,
+    author: post.authorName || "SNH Admin",
   };
 }

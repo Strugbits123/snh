@@ -92,3 +92,46 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Rich Content Table Styles */
+.rich-content table {
+  @apply w-full border-collapse overflow-hidden;
+}
+
+.rich-content tr:nth-child(even) {
+  @apply bg-muted/30;
+}
+
+.rich-content tr:hover {
+  @apply bg-muted/50 transition-colors;
+}
+
+.rich-content td {
+  @apply p-4 text-muted-foreground leading-relaxed transition-colors;
+}
+
+.rich-content th {
+  @apply p-4 text-left font-bold text-foreground bg-muted border-b border-border;
+}
+
+.rich-content td p:last-child {
+  @apply mb-0;
+}
+
+.rich-content .overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+.rich-content .overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+
+.rich-content .overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rich-content .overflow-x-auto::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--border));
+  border-radius: 20px;
+}

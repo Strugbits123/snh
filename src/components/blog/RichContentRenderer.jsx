@@ -163,6 +163,40 @@ function RenderNode({ node, idx }) {
       );
     }
 
+    case "TABLE": {
+      return (
+        <div key={idx} className="overflow-x-auto my-8 rounded-xl border border-border">
+          <table className="w-full border-collapse text-sm">
+            <tbody className="divide-y divide-border">
+              {(node.nodes || []).map((row, i) => (
+                <RenderNode key={i} node={row} idx={i} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    case "TABLE_ROW": {
+      return (
+        <tr key={idx} className="divide-x divide-border">
+          {(node.nodes || []).map((cell, i) => (
+            <RenderNode key={i} node={cell} idx={i} />
+          ))}
+        </tr>
+      );
+    }
+
+    case "TABLE_CELL": {
+      return (
+        <td key={idx} className="p-4 align-top">
+          {(node.nodes || []).map((child, i) => (
+            <RenderNode key={i} node={child} idx={i} />
+          ))}
+        </td>
+      );
+    }
+
     default:
       return null;
   }

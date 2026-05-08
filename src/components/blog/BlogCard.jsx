@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 
-import { Calendar, Clock, ArrowRight } from "lucide-react";
+import { Calendar, Clock, ArrowRight, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -58,6 +58,12 @@ export default function BlogCard({ post: rawPost, index = 0 }) {
               <span className="flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
                 {post.minutesToRead} min read
+              </span>
+            )}
+            {post.author && (
+              <span className="flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5" />
+                {post.author}
               </span>
             )}
           </div>

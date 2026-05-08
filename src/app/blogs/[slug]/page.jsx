@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 
 import { wixProxy } from "@/lib/wixProxy";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Calendar, Clock } from "lucide-react";
+import { Loader2, ArrowLeft, Calendar, Clock, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { extractBlogDetails, cn } from "@/lib/utils";
@@ -107,6 +107,12 @@ export default function BlogDetail() {
                 {post.minutesToRead} min read
               </span>
             )}
+            {post.author && (
+              <span className="flex items-center gap-1.5">
+                <User className="w-4 h-4" />
+                {post.author}
+              </span>
+            )}
           </div>
 
           {/* Title */}
@@ -114,15 +120,17 @@ export default function BlogDetail() {
             {post.title}
           </h1>
 
-          {/* Excerpt */}
-          {post.excerpt && (
+
+          {/* {post.excerpt && (
             <p className="text-lg text-muted-foreground leading-relaxed mb-8 border-l-4 border-accent/40 pl-5 italic">
               {post.excerpt}
             </p>
           )}
 
-          {/* Cover Image */}
-          {post.coverImage && (
+       
+        
+           */}
+  {post.coverImage && (
             <div className="relative rounded-3xl overflow-hidden aspect-[16/7] bg-muted mb-10">
               <img
                 src={post.coverImage}
@@ -130,8 +138,7 @@ export default function BlogDetail() {
                 className="w-full h-full object-cover"
               />
             </div>
-          )}
-
+          )} 
           {/* Article Content — rich content preferred, plain text as fallback */}
           {post.richContent ?
             <RichContentRenderer richContent={post.richContent} />

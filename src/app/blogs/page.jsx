@@ -73,17 +73,17 @@ export default function Blogs() {
           <div className="flex justify-center py-32">
             <Loader2 className="w-8 h-8 animate-spin text-accent" />
           </div>
-        : posts.length === 0 ?
-          <div className="text-center py-32 text-muted-foreground">
-            {search ?
-              `No articles found for "${search}".`
-            : "No blog posts yet."}
-          </div>
-        : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts.map((post, i) => (
-              <BlogCard key={post._id} post={post} index={i} />
-            ))}
-          </div>
+          : posts.length === 0 ?
+            <div className="text-center py-32 text-muted-foreground">
+              {search ?
+                `No articles found for "${search}".`
+                : "No blog posts yet."}
+            </div>
+            : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {posts.map((post, i) => (
+                <BlogCard key={post._id} post={post} index={i} />
+              ))}
+            </div>
         }
       </div>
     </div>

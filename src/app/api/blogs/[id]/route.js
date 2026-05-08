@@ -85,7 +85,38 @@ export async function GET(request, { params }) {
         p.excerpt ||
         "",
       metrics: p.metrics || {},
+      memberId: p.memberId || null,
+      mostRecentContributorId: p.mostRecentContributorId || null,
+      ownerId: p.ownerId || null,
+      authorName: "SNH Admin"
     };
+
+    // Resolve author name dynamically
+    const authorId = post.memberId || post.ownerId || post.mostRecentContributorId;
+    if (authorId) {
+      console.log("Resolving author name for ID:", authorId);
+      try {
+        const memberRes = await fetch(`https://www.wixapis.com/members/v1/members/${authorId}`, {
+          headers: {
+            "Authorization": API_KEY,
+            "wix-site-id": SITE_ID
+          }
+        });
+        if (memberRes.ok) {
+          const memberData = await memberRes.json();
+          const name = memberData.member?.profile?.nickname || memberData.member?.profile?.name || memberData.member?.contactId;
+          console.log("Member data fetched:", name);
+          if (name) post.authorName = name;
+        } else {
+          const errorText = await memberRes.text();
+          console.error("Failed to fetch member:", errorText);
+        }
+      } catch (e) {
+        console.error("Error resolving author:", e);
+      }
+    } else {
+      console.log("No author ID found for post");
+    }
 
     return NextResponse.json({ post });
   } catch (err) {
