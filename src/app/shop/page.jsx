@@ -116,8 +116,66 @@ console.log("Collections==>",collections)
     setColorFilter("All");
   };
 
+  const makeParam = searchParams.get("make");
+  const makeLower = makeParam?.toLowerCase();
+  let itemListName = "Electric Golf Carts for Sale — SNH Golf Carts LLC";
+  let itemListDesc = "Browse new and used electric golf carts and street-legal LSVs from DACH, TEKO, Tomberlin, and Evolution Series. Starting at $8,000.";
+  let itemListUrl = "https://www.snhgolfcarts.com/shop";
+  let itemListElement = products.map((p, idx) => ({
+    "@type": "ListItem",
+    "position": idx + 1,
+    "url": `https://www.snhgolfcarts.com/product/${p.id}`,
+  }));
+
+  if (makeLower === "dach") {
+    itemListName = "DACH Electric Golf Carts — SNH Golf Carts LLC";
+    itemListDesc = "Browse DACH electric golf carts for sale at SNH Golf Carts LLC in Londonderry, NH. Premium DACH models with manufacturer warranty.";
+    itemListUrl = "https://www.snhgolfcarts.com/shop?make=DACH";
+    itemListElement = [{ "@type": "ListItem", "position": 1, "url": "https://www.snhgolfcarts.com/shop?make=DACH" }];
+  } else if (makeLower === "teko") {
+    itemListName = "TEKO Electric Golf Carts — SNH Golf Carts LLC";
+    itemListDesc = "Browse TEKO electric golf carts for sale at SNH Golf Carts LLC in Londonderry, NH. Premium TEKO models with manufacturer warranty.";
+    itemListUrl = "https://www.snhgolfcarts.com/shop?make=TEKO";
+    itemListElement = [{ "@type": "ListItem", "position": 1, "url": "https://www.snhgolfcarts.com/shop?make=TEKO" }];
+  }
+
+  const shopSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.snhgolfcarts.com/",
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Shop",
+            "item": "https://www.snhgolfcarts.com/shop",
+          },
+        ],
+      },
+      {
+        "@type": "ItemList",
+        "name": itemListName,
+        "description": itemListDesc,
+        "url": itemListUrl,
+        "numberOfItems": itemListElement.length,
+        "itemListElement": itemListElement,
+      },
+    ],
+  };
+
   return (
     <div className="pt-24 pb-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(shopSchema) }}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <SectionHeading
           label="Our Inventory"
@@ -187,7 +245,7 @@ console.log("Collections==>",collections)
           </div>
         : filtered.length === 0 ?
           <div className="text-center py-32 text-muted-foreground">
-            No carts match your filters.
+            {categoryFilter === "Accessories" ? "No accessories match your filters." : "No carts match your filters."}
           </div>
         : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filtered.map((cart, i) => (
