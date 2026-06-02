@@ -16,10 +16,12 @@ export default async function sitemap() {
     console.error("Product sitemap: error fetching products from Wix:", err);
   }
 
-  return products.map((p) => ({
-    url: `${baseUrl}/product/${p._id || p.id}`,
-    lastModified: p.lastUpdated ? new Date(p.lastUpdated) : new Date(),
-    changeFrequency: "weekly",
-    priority: 0.6,
-  }));
+  return products
+    .filter((p) => p.slug || p._id || p.id)
+    .map((p) => ({
+      url: `${baseUrl}/product/${p.slug || p._id || p.id}`,
+      lastModified: p.lastUpdated ? new Date(p.lastUpdated) : new Date(),
+      changeFrequency: "weekly",
+      priority: 0.6,
+    }));
 }

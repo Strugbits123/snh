@@ -8,6 +8,17 @@ export function cn(...inputs) {
 export const isIframe =
   typeof window !== "undefined" && window.self !== window.top;
 
+// Fallback slugifier — only used when a Wix product is missing its slug field.
+export function slugify(text) {
+  return (text || "")
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export function extractProductDetails(product, collections = []) {
   if (!product) return {};
 
@@ -81,7 +92,7 @@ export function extractProductDetails(product, collections = []) {
       [],
     description: product.description || "",
     inStock: product.stock?.inventoryStatus !== "OUT_OF_STOCK",
-    slug: product.slug,
+    slug: product.slug || slugify(product.name),
     id: product._id || product.id,
     colors: colors,
     colorOptionName: colorOption?.name || "Color",

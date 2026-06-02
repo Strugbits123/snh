@@ -18,7 +18,7 @@ export default function ProductCard({ cart: inputCart, index = 0 }) {
       transition={{ delay: index * 0.1, duration: 0.5 }}
     >
       <Link
-        href={`/product/${cart.id}`}
+        href={`/product/${cart.slug || cart.id}`}
         className="group block bg-card rounded-2xl overflow-hidden border border-border hover:border-accent/30 transition-all duration-500 hover:shadow-xl hover:shadow-accent/5"
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">

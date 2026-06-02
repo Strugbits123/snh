@@ -124,7 +124,7 @@ console.log("Collections==>",collections)
   let itemListElement = products.map((p, idx) => ({
     "@type": "ListItem",
     "position": idx + 1,
-    "url": `https://www.snhgolfcarts.com/product/${p.id}`,
+    "url": `https://www.snhgolfcarts.com/product/${p.slug || p.id}`,
   }));
 
   if (makeLower === "dach") {

@@ -19,7 +19,7 @@ export async function POST(req) {
       name: p.name,
       price:
         p.priceData?.formatted?.price || p.priceData?.price || "Call for price",
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/product/${p._id}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/product/${p.slug || p._id}`,
       description: p.description?.replace(/<[^>]*>?/gm, "").substring(0, 100),
     }));
 

@@ -27,7 +27,7 @@ import { extractProductDetails, cn } from "@/lib/utils";
 import FinancingBadge from "@/components/FinancingBadge";
 
 export default function ProductDetail() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const [cart, setCart] = useState(null);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +45,11 @@ export default function ProductDetail() {
         const rawProducts = res.products || [];
         const collections = res.collections || [];
 
-        const rawProduct = rawProducts.find((p) => (p._id || p.id) === id);
+        // Look up by slug first; fall back to legacy UUID lookup for safety
+        // (the next.config redirect should normally catch UUID URLs before this).
+        const rawProduct = rawProducts.find(
+          (p) => p.slug === slug || (p._id || p.id) === slug,
+        );
 
         if (rawProduct) {
           const product = extractProductDetails(rawProduct, collections);
@@ -60,14 +64,18 @@ export default function ProductDetail() {
             extractProductDetails(item, collections),
           );
 
+          const currentId = product.id;
           let relatedItems = [];
           if (product.isAccessory) {
             relatedItems = processed.filter(
-              (p) => p.isAccessory && p.id !== id,
+              (p) => p.isAccessory && p.id !== currentId,
             );
           } else {
             relatedItems = processed.filter(
-              (p) => !p.isAccessory && p.brand === product.brand && p.id !== id,
+              (p) =>
+                !p.isAccessory &&
+                p.brand === product.brand &&
+                p.id !== currentId,
             );
           }
 
@@ -76,7 +84,7 @@ export default function ProductDetail() {
       })
       .catch((err) => console.error("Error fetching product details:", err))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [slug]);
 
   const handleCardCheckout = async () => {
     setCheckoutLoading(true);
@@ -165,14 +173,14 @@ export default function ProductDetail() {
         "itemListElement": [
           { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.snhgolfcarts.com/" },
           { "@type": "ListItem", "position": 2, "name": "Shop", "item": "https://www.snhgolfcarts.com/shop" },
-          { "@type": "ListItem", "position": 3, "name": `${cart.brand?.toUpperCase() || ""} ${cart.name}`, "item": `https://www.snhgolfcarts.com/product/${id}` }
+          { "@type": "ListItem", "position": 3, "name": `${cart.brand?.toUpperCase() || ""} ${cart.name}`, "item": `https://www.snhgolfcarts.com/product/${cart.slug || slug}` }
         ]
       },
       {
         "@type": "Product",
-        "@id": `https://www.snhgolfcarts.com/product/${id}#product`,
+        "@id": `https://www.snhgolfcarts.com/product/${cart.slug || slug}#product`,
         "name": `${cart.brand?.toUpperCase() || ""} ${cart.name}`,
-        "url": `https://www.snhgolfcarts.com/product/${id}`,
+        "url": `https://www.snhgolfcarts.com/product/${cart.slug || slug}`,
         "image": cart.image || "",
         "description": cart.description?.replace(/<[^>]*>/g, "").substring(0, 300) || "",
         "brand": {
@@ -186,7 +194,7 @@ export default function ProductDetail() {
         },
         "offers": {
           "@type": "Offer",
-          "url": `https://www.snhgolfcarts.com/product/${id}`,
+          "url": `https://www.snhgolfcarts.com/product/${cart.slug || slug}`,
           "priceCurrency": "USD",
           "price": cart.price || "0",
           "availability": cart.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
