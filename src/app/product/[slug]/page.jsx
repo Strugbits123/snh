@@ -165,60 +165,8 @@ export default function ProductDetail() {
     { icon: Battery, label: "Battery", value: cart.battery },
   ].filter((s) => s.value);
 
-  const productSchema = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.snhgolfcarts.com/" },
-          { "@type": "ListItem", "position": 2, "name": "Shop", "item": "https://www.snhgolfcarts.com/shop" },
-          { "@type": "ListItem", "position": 3, "name": `${cart.brand?.toUpperCase() || ""} ${cart.name}`, "item": `https://www.snhgolfcarts.com/product/${cart.slug || slug}` }
-        ]
-      },
-      {
-        "@type": "Product",
-        "@id": `https://www.snhgolfcarts.com/product/${cart.slug || slug}#product`,
-        "name": `${cart.brand?.toUpperCase() || ""} ${cart.name}`,
-        "url": `https://www.snhgolfcarts.com/product/${cart.slug || slug}`,
-        "image": cart.image || "",
-        "description": cart.description?.replace(/<[^>]*>/g, "").substring(0, 300) || "",
-        "brand": {
-          "@type": "Brand",
-          "name": cart.brand || "SNH Golf Carts"
-        },
-        "seller": {
-          "@type": "Organization",
-          "name": "SNH Golf Carts LLC",
-          "url": "https://www.snhgolfcarts.com/"
-        },
-        "offers": {
-          "@type": "Offer",
-          "url": `https://www.snhgolfcarts.com/product/${cart.slug || slug}`,
-          "priceCurrency": "USD",
-          "price": cart.price || "0",
-          "availability": cart.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-          "seller": {
-            "@type": "Organization",
-            "name": "SNH Golf Carts LLC"
-          }
-        },
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.8",
-          "reviewCount": "22",
-          "bestRating": "5"
-        }
-      }
-    ]
-  };
-
   return (
     <div className="pt-24 pb-16">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
-      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Link
           href="/shop"

@@ -21,66 +21,8 @@ const STATS = [
 ];
 
 export default function About() {
-  const aboutSchema = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "BreadcrumbList",
-        "itemListElement": [
-          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.snhgolfcarts.com/" },
-          { "@type": "ListItem", "position": 2, "name": "About", "item": "https://www.snhgolfcarts.com/about" }
-        ]
-      },
-      {
-        "@type": "AboutPage",
-        "url": "https://www.snhgolfcarts.com/about",
-        "name": "About SNH Golf Carts LLC — Veteran-Owned Golf Cart Dealer in NH",
-        "description": "SNH Golf Carts LLC is a veteran-owned electric golf cart dealer in Londonderry, NH. 500+ carts sold, 15+ years experience, 1,000+ happy customers.",
-        "mainEntity": {
-          "@id": "https://www.snhgolfcarts.com/#organization"
-        }
-      },
-      {
-        "@type": "Organization",
-        "@id": "https://www.snhgolfcarts.com/#organization",
-        "name": "SNH Golf Carts LLC",
-        "url": "https://www.snhgolfcarts.com/",
-        "description": "Veteran-owned electric golf cart dealer in Londonderry, NH. New & used golf carts, street-legal LSVs, rentals, repairs, and battery replacement.",
-        "foundingDate": "2010",
-        "foundingLocation": {
-          "@type": "Place",
-          "name": "Londonderry, NH"
-        },
-        "numberOfEmployees": {
-          "@type": "QuantitativeValue",
-          "value": "5"
-        },
-        "slogan": "Local. Honest. Veteran-Built.",
-        "telephone": "+1-603-777-7831",
-        "email": "info@snhgolfcarts.com",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "574 Mammoth Rd, Building B-2",
-          "addressLocality": "Londonderry",
-          "addressRegion": "NH",
-          "postalCode": "03053",
-          "addressCountry": "US"
-        },
-        "sameAs": [
-          "https://www.instagram.com/snhgolfcarts/",
-          "https://www.facebook.com/profile.php?id=100085891995936",
-          "https://share.google/qhJKzIP77xtGCT68V"
-        ]
-      }
-    ]
-  };
-
   return (
     <div>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutSchema) }}
-      />
       <section className="pt-32 pb-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-center">

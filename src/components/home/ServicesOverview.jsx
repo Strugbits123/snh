@@ -9,9 +9,21 @@ import SectionHeading from "../SectionHeading";
 const ICON_MAP = { ShoppingCart, Wrench, CalendarDays };
 
 const SERVICES = [
-  { name: "New & Used Sales", icon: "ShoppingCart", desc: "Browse electric golf carts for sale from DACH, TEKO, Tomberlin, and Evolution Series. Affordable golf carts starting at $8K — used inventory available too." },
-  { name: "Repair & Maintenance", icon: "Wrench", desc: "Golf cart battery replacement, diagnostics, electrical repair, and general maintenance. Whatever the issue, your cart leaves running right." },
-  { name: "Rentals", icon: "CalendarDays", desc: "Rent a golf cart for a weekend, an event, or the full summer. Street-legal LSV rentals available — perfect for weddings, campgrounds, and lakeside cruising. Starting at $125/day." },
+  {
+    name: "New & Used Sales",
+    icon: "ShoppingCart",
+    desc: "Browse electric golf carts for sale from DACH, TEKO, Tomberlin, and Evolution Series. Affordable golf carts starting at $8K — used inventory available too.",
+  },
+  {
+    name: "Repair & Maintenance",
+    icon: "Wrench",
+    desc: "Golf cart battery replacement, diagnostics, electrical repair, and general maintenance. Whatever the issue, your cart leaves running right.",
+  },
+  {
+    name: "Rentals",
+    icon: "CalendarDays",
+    desc: "Rent a golf cart for a weekend, an event, or the full summer. Street-legal LSV rentals available — perfect for weddings, campgrounds, and lakeside cruising. Starting at $125/day.",
+  },
 ];
 
 export default function ServicesOverview() {
@@ -39,11 +51,15 @@ export default function ServicesOverview() {
                 <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mb-6 group-hover:bg-accent/20 transition-colors">
                   <Icon className="w-6 h-6 text-accent" />
                 </div>
-                <h3 className="font-display font-bold text-lg mb-3">{service.name}</h3>
+                <h3 className="font-display font-bold text-lg mb-3">
+                  {service.name}
+                </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-6">
                   {service.desc}
                 </p>
-                <Link href="/services"
+                <Link
+                  href="/services"
+                  aria-label={`Learn more about ${service.name}`}
                   className="flex items-center gap-1 text-sm font-medium text-accent group-hover:gap-2 transition-all"
                 >
                   Learn More <ArrowRight className="w-4 h-4" />
@@ -55,7 +71,10 @@ export default function ServicesOverview() {
 
         <div className="text-center mt-12">
           <Link href="/services">
-            <Button size="lg" className="bg-accent hover:bg-accent/90 text-white rounded-full px-8">
+            <Button
+              size="lg"
+              className="bg-accent hover:bg-accent/90 text-white rounded-full px-8"
+            >
               <Wrench className="w-4 h-4 mr-2" />
               Book a Service
             </Button>

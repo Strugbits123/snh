@@ -7,6 +7,35 @@ export const metadata = {
   },
 };
 
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://www.snhgolfcarts.com/",
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Blog",
+      "item": "https://www.snhgolfcarts.com/blogs",
+    },
+  ],
+};
+
 export default function BlogsLayout({ children }) {
-  return <>{children}</>;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c"),
+        }}
+      />
+      {children}
+    </>
+  );
 }

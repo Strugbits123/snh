@@ -27,6 +27,40 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  openGraph: {
+    type: "website",
+    siteName: "SNH Golf Carts LLC",
+    url: "https://www.snhgolfcarts.com/",
+    title: "SNH Golf Carts LLC | Electric Golf Carts in Southern NH",
+    description:
+      "Shop new and used electric golf carts, street-legal LSVs, and flexible rentals. Sold, serviced, and delivered across Southern NH.",
+    locale: "en_US",
+    images: [
+      {
+        url: "/Logo-png-b.png",
+        width: 1200,
+        height: 630,
+        alt: "SNH Golf Carts LLC",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SNH Golf Carts LLC | Electric Golf Carts in Southern NH",
+    description:
+      "Shop new and used electric golf carts, street-legal LSVs, and flexible rentals. Sold, serviced, and delivered across Southern NH.",
+    images: ["/Logo-png-b.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   icons: {
     icon: [
       {
