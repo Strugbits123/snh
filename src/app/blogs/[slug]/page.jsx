@@ -1,63 +1,24 @@
-"use client";
-import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-
-import { wixProxy } from "@/lib/wixProxy";
+import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Calendar, Clock, User } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
 import { format } from "date-fns";
-import { extractBlogDetails, cn } from "@/lib/utils";
+import { getPost } from "@/lib/wixBlog";
 import RichContentRenderer from "@/components/blog/RichContentRenderer";
 
-export default function BlogDetail() {
-  const { slug } = useParams();
-  const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+// Revalidate every hour so edited posts pick up; ISR keeps the HTML cached
+// at the edge so Googlebot gets fully-rendered content on first byte.
+export const revalidate = 3600;
 
-  useEffect(() => {
-    setLoading(true);
-    setNotFound(false);
+export default async function BlogDetail({ params }) {
+  const { slug } = await params;
+  const post = await getPost(slug);
 
-    fetch(`/api/blogs/${slug}`)
-      .then((r) => r.json())
-      .then((res) => {
-        const fullPost = res.post || res.data?.post || res;
-
-        if (fullPost && (fullPost.title || fullPost._id)) {
-          setPost(extractBlogDetails(fullPost));
-        } else {
-          setNotFound(true);
-        }
-      })
-      .catch((err) => {
-        console.error("Blog fetch error:", err);
-        setNotFound(true);
-      })
-      .finally(() => setLoading(false));
-  }, [slug]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center pt-20">
-        <Loader2 className="w-8 h-8 animate-spin text-accent" />
-      </div>
-    );
-  }
-
-  if (notFound || !post) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center pt-20 gap-4">
-        <p className="text-muted-foreground text-lg">Article not found.</p>
-        <Link href="/blogs">
-          <Button variant="outline" className="rounded-full">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Blog
-          </Button>
-        </Link>
-      </div>
-    );
+  // Trigger a real 404 (not a soft 404). Next.js renders the closest
+  // not-found boundary AND sends an HTTP 404 status — which is what
+  // Search Console wants to see for missing posts.
+  if (!post) {
+    notFound();
   }
 
   const formattedDate =
@@ -76,11 +37,7 @@ export default function BlogDetail() {
           <ArrowLeft className="w-4 h-4" /> Back to Blog
         </Link>
 
-        <motion.article
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <article>
           {/* Meta */}
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
             {formattedDate && (
@@ -108,16 +65,6 @@ export default function BlogDetail() {
             {post.title}
           </h1>
 
-
-          {/* {post.excerpt && (
-            <p className="text-lg text-muted-foreground leading-relaxed mb-8 border-l-4 border-accent/40 pl-5 italic">
-              {post.excerpt}
-            </p>
-          )}
-
-       
-        
-           */}
           {post.coverImage && (
             <div className="relative rounded-3xl overflow-hidden bg-muted mb-10 flex justify-center">
               <img
@@ -127,6 +74,7 @@ export default function BlogDetail() {
               />
             </div>
           )}
+
           {/* Article Content — rich content preferred, plain text as fallback */}
           {post.richContent ?
             <RichContentRenderer richContent={post.richContent} />
@@ -145,7 +93,7 @@ export default function BlogDetail() {
                 ))}
             </div>
           }
-        </motion.article>
+        </article>
 
         {/* Footer CTA */}
         <div className="mt-16 pt-10 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
