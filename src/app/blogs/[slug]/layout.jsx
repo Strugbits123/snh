@@ -1,32 +1,33 @@
-import { cache } from "react";
-import { wixClient } from "@/lib/wixClient";
-import { extractBlogDetails } from "@/lib/utils";
-
-const getPost = cache(async (slug) => {
-  try {
-    const res = await wixClient.posts.queryPosts().limit(50).find();
-    const rawPosts = res._items || res.items || [];
-    const rawPost = rawPosts.find((p) => p.slug === slug);
-    if (rawPost) {
-      return extractBlogDetails(rawPost);
-    }
-  } catch (err) {
-    console.error("Error fetching blog post:", err);
-  }
-  return null;
-});
+import { getPost } from "@/lib/wixBlog";
+import { metaDescription, metaTitle } from "@/lib/utils";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const blog = await getPost(slug);
   if (blog) {
-    const title = `${blog.title} | SNH Golf Carts LLC`;
-    const description = blog.excerpt || "SNH Golf Carts Blog";
+    // Wix-managed SEO (set per-post in the Wix CMS) wins; fall back to
+    // safely-truncated derivations only when the editor hasn't filled them in.
+    const title =
+      blog.seoTitle || metaTitle(blog.title);
+    const description =
+      blog.seoDescription ||
+      metaDescription(blog.excerpt) ||
+      metaDescription(blog.content) ||
+      "Read the latest from SNH Golf Carts LLC — guides, news, and maintenance tips for electric golf carts and LSVs in Southern NH.";
+    const ogImage = blog.seoOgImage || blog.coverImage || null;
+    const canonical = blog.seoCanonical || `/blogs/${slug}`;
     return {
       title,
       description,
       alternates: {
-        canonical: `/blogs/${slug}`,
+        canonical,
+      },
+      openGraph: {
+        title,
+        description,
+        type: "article",
+        url: `https://www.snhgolfcarts.com/blogs/${slug}`,
+        images: ogImage ? [{ url: ogImage }] : undefined,
       },
     };
   }
@@ -71,12 +72,49 @@ export default async function BlogLayout({ children, params }) {
     ],
   };
 
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": `https://www.snhgolfcarts.com/blogs/${slug}#article`,
+    "headline": blog.title,
+    "description":
+      blog.seoDescription ||
+      metaDescription(blog.excerpt) ||
+      metaDescription(blog.content) ||
+      "",
+    "image": blog.seoOgImage || blog.coverImage || undefined,
+    "datePublished": blog.publishDate || undefined,
+    "dateModified": blog.publishDate || undefined,
+    "author": {
+      "@type": "Person",
+      "name": blog.author || "SNH Admin",
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SNH Golf Carts LLC",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.snhgolfcarts.com/Logo-png-b.png",
+      },
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://www.snhgolfcarts.com/blogs/${slug}`,
+    },
+  };
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c"),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(articleSchema).replace(/</g, "\\u003c"),
         }}
       />
       {children}

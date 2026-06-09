@@ -8,6 +8,41 @@ export function cn(...inputs) {
 export const isIframe =
   typeof window !== "undefined" && window.self !== window.top;
 
+// Build a safe meta description: strip HTML, collapse whitespace,
+// truncate at a word boundary, and append an ellipsis. Default 155 chars
+// (just under Google's SERP snippet cutoff).
+export function metaDescription(text, max = 155) {
+  if (!text || typeof text !== "string") return "";
+  const stripped = text
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (stripped.length <= max) return stripped;
+  const truncated = stripped.slice(0, max);
+  const lastSpace = truncated.lastIndexOf(" ");
+  const safeCut = lastSpace > Math.floor(max * 0.6) ? lastSpace : max;
+  return truncated.slice(0, safeCut).trim() + "…";
+}
+
+// Build a meta title that fits Google's ~60 char SERP cutoff. If
+// `${title} | ${brandSuffix}` is too long, drop the suffix; if even the
+// raw title is too long, truncate at a word boundary.
+export function metaTitle(title, brandSuffix = "SNH Golf Carts LLC", max = 60) {
+  const t = (title || "").trim();
+  if (!t) return brandSuffix;
+  const full = `${t} | ${brandSuffix}`;
+  if (full.length <= max) return full;
+  if (t.length <= max) return t;
+  const truncated = t.slice(0, max - 1);
+  const lastSpace = truncated.lastIndexOf(" ");
+  const safeCut = lastSpace > Math.floor(max * 0.6) ? lastSpace : max - 1;
+  return truncated.slice(0, safeCut).trim() + "…";
+}
+
 // Fallback slugifier — only used when a Wix product is missing its slug field.
 export function slugify(text) {
   return (text || "")
@@ -188,6 +223,7 @@ export function extractBlogDetails(post) {
     slug: post.slug,
     excerpt: post.excerpt,
     content: post.content,
+    contentText: post.contentText || "",
     richContent: post.richContent || post.content,
     coverImage: coverImage,
     publishDate:
