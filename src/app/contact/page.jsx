@@ -68,6 +68,9 @@ export default function Contact() {
       if (resData.success) {
         setSubmitted(true);
         setErrors({});
+        // Fire GA conversion event on successful submission
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ event: "form_submit" });
       } else {
         alert("Something went wrong. Please try again.");
       }
