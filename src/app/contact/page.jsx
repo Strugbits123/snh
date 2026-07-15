@@ -68,9 +68,11 @@ export default function Contact() {
       const resData = await response.json();
       if (resData.success) {
         setErrors({});
-        // Fire GA conversion event, then redirect to the thank-you page
-        window.dataLayer = window.dataLayer || [];
-        window.dataLayer.push({ event: "form_submit" });
+        // Send the GA4 conversion event once per successful submission,
+        // then redirect to the thank-you page.
+        if (typeof window !== "undefined" && typeof window.gtag === "function") {
+          window.gtag("event", "form_submit");
+        }
         router.push("/thank-you");
       } else {
         alert("Something went wrong. Please try again.");

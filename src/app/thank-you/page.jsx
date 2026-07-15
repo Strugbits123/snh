@@ -1,27 +1,10 @@
 "use client";
-import { useEffect } from "react";
 import Link from "next/link";
 import { CheckCircle, ArrowRight, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 export default function ThankYou() {
-  useEffect(() => {
-    // Register a GA4 page_view for /thank-you so conversion tracking fires
-    // even under client-side (SPA) navigation from the forms.
-    if (typeof window !== "undefined") {
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        window.dataLayer.push(arguments);
-      }
-      gtag("event", "page_view", {
-        page_path: "/thank-you",
-        page_location: window.location.href,
-        page_title: "Thank You | SNH Golf Carts LLC",
-      });
-    }
-  }, []);
-
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center pt-24 pb-16 px-4">
       <motion.div
