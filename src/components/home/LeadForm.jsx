@@ -6,13 +6,12 @@ import {
   Wrench,
   ArrowLeft,
   ArrowRight,
-  CheckCircle,
   ChevronLeft,
   ChevronRight,
   Shield,
   Calendar,
 } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const BUDGET_OPTIONS = [
   "Under $8,000",
@@ -139,6 +138,7 @@ const stepVariants = {
 };
 
 export default function LeadForm() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [appointmentType, setAppointmentType] = useState(null);
   const [form, setForm] = useState({
@@ -239,7 +239,10 @@ export default function LeadForm() {
       const resData = await response.json();
 
       if (resData.success || resData.contactId) {
-        setStep(3);
+        // Fire GA conversion event, then redirect to the thank-you page
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({ event: "form_submit" });
+        router.push("/thank-you");
       } else {
         alert("Something went wrong. Please try again or call us.");
       }
@@ -276,7 +279,7 @@ export default function LeadForm() {
 
         {/* Step indicator */}
         <div className="flex items-center gap-2 mt-4">
-          {[1, 2, 3].map((s) => (
+          {[1, 2].map((s) => (
             <div
               key={s}
               className="h-0.5 flex-1 rounded-full transition-all duration-500"
@@ -590,34 +593,6 @@ export default function LeadForm() {
                   </>
                 }
               </button>
-            </motion.div>
-          )}
-
-          {/* ── STEP 3: SUCCESS ── */}
-          {step === 3 && (
-            <motion.div
-              key="step3"
-              variants={stepVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.25 }}
-              className="flex flex-col items-center justify-center py-10 text-center"
-            >
-              <div className="w-16 h-16 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center mb-4">
-                <CheckCircle className="w-8 h-8 text-accent" />
-              </div>
-              <h3 className="text-xl font-bold text-white font-display mb-2">
-                You're all set!
-              </h3>
-              <p className="text-sm text-white/50 mb-8 max-w-[260px] font-sans">
-                We'll be in touch within 1 business day.
-              </p>
-              <Link href="/shop">
-                <button className="bg-accent hover:bg-accent/90 text-white font-bold py-3 px-8 rounded-full text-sm flex items-center gap-2 transition-colors shadow-lg">
-                  Browse Inventory <ArrowRight className="w-4 h-4" />
-                </button>
-              </Link>
             </motion.div>
           )}
         </AnimatePresence>

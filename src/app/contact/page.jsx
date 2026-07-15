@@ -1,11 +1,12 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { MapPin, Phone, Mail, Clock, Send, CheckCircle } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
 import { motion } from "framer-motion";
 
 const CONTACT_INFO = [
@@ -16,9 +17,9 @@ const CONTACT_INFO = [
 ];
 
 export default function Contact() {
+  const router = useRouter();
   const [form, setForm] = useState({ name: "", email: "", phone: "", inquiry_type: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
 
   const validate = () => {
@@ -66,11 +67,11 @@ export default function Contact() {
 
       const resData = await response.json();
       if (resData.success) {
-        setSubmitted(true);
         setErrors({});
-        // Fire GA conversion event on successful submission
+        // Fire GA conversion event, then redirect to the thank-you page
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({ event: "form_submit" });
+        router.push("/thank-you");
       } else {
         alert("Something went wrong. Please try again.");
       }
@@ -179,26 +180,7 @@ export default function Contact() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
             >
-              {submitted ? (
-                <div className="bg-accent/5 border border-accent/20 rounded-2xl p-12 text-center">
-                  <CheckCircle className="w-16 h-16 text-accent mx-auto mb-4" />
-                  <h3 className="font-display font-bold text-2xl mb-2">Message Sent!</h3>
-                  <p className="text-muted-foreground">
-                    Thank you for reaching out. We'll get back to you within 24 hours.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="mt-6 rounded-full"
-                    onClick={() => {
-                      setSubmitted(false);
-                      setForm({ name: "", email: "", phone: "", inquiry_type: "", message: "" });
-                    }}
-                  >
-                    Send Another Message
-                  </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+              <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                   <h2 className="font-display font-bold text-2xl mb-6">Send Us a Message</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -275,7 +257,6 @@ export default function Contact() {
                     {submitting ? "Sending..." : "Send Message"}
                   </Button>
                 </form>
-              )}
             </motion.div>
 
             <motion.div
