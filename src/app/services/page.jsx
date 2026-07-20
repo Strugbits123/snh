@@ -164,7 +164,12 @@ export default function Services() {
              }
            });
 
-           setVehicles(uniqueVehicles.sort((a, b) => a.name.localeCompare(b.name)));
+           const sortedVehicles = uniqueVehicles.sort((a, b) =>
+             a.name.localeCompare(b.name),
+           );
+           // Always keep "Other" as the last option
+           sortedVehicles.push({ name: "Other", isLSV: false });
+           setVehicles(sortedVehicles);
         }
       })
       .catch((err) => console.error("Error fetching vehicles:", err));
