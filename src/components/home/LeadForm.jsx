@@ -22,16 +22,33 @@ const BUDGET_OPTIONS = [
 ];
 
 const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-const TIMES = [
-  "9:00 AM",
-  "10:00 AM",
-  "11:00 AM",
-  "12:00 PM",
-  "1:00 PM",
-  "2:00 PM",
-  "3:00 PM",
-  "4:00 PM",
-];
+
+// Business hours by day of week (0 = Sun ... 6 = Sat). Tuesday is closed.
+const BUSINESS_HOURS = {
+  0: { open: 10, close: 15 }, // Sun: 10:00AM – 3:00PM
+  1: { open: 9, close: 17 }, // Mon: 9:00AM – 5:00PM
+  2: null, // Tue: Closed
+  3: { open: 9, close: 17 }, // Wed: 9:00AM – 5:00PM
+  4: { open: 9, close: 17 }, // Thu: 9:00AM – 5:00PM
+  5: { open: 9, close: 17 }, // Fri: 9:00AM – 5:00PM
+  6: { open: 10, close: 17 }, // Sat: 10:00AM – 5:00PM
+};
+
+const formatHour = (hour) => {
+  const period = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+  return `${displayHour}:00 ${period}`;
+};
+
+// Last bookable slot starts one hour before close so the appointment fits within business hours.
+const getTimesForDate = (date) => {
+  if (!date) return [];
+  const hours = BUSINESS_HOURS[date.getDay()];
+  if (!hours) return [];
+  const slots = [];
+  for (let h = hours.open; h < hours.close; h++) slots.push(formatHour(h));
+  return slots;
+};
 
 const inputCls = (hasError) =>
   `w-full px-3 py-2.5 rounded-lg border text-sm outline-none transition-all font-sans
@@ -508,7 +525,7 @@ export default function LeadForm() {
                   <div
                     className={`grid grid-cols-4 gap-1.5 ${errors.time ? "p-2 rounded-xl border border-red-400/30" : ""}`}
                   >
-                    {TIMES.map((t) => (
+                    {getTimesForDate(selectedDate).map((t) => (
                       <button
                         key={t}
                         onClick={() => {
