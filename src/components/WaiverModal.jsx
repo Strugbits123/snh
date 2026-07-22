@@ -502,8 +502,14 @@ export default function WaiverModal({
   );
 }
 
+const OTHER_VEHICLE_VALUE = "__other__";
+
 /* ─── Step 0: Customer Info ─── */
 function StepInfo({ formData, updateField, errors, vehicles = [] }) {
+  const [isOtherVehicle, setIsOtherVehicle] = useState(
+    Boolean(formData.vehicleMakeModel) &&
+      !vehicles.some((v) => v.name === formData.vehicleMakeModel),
+  );
   const fieldStyle = (hasError) => ({
     width: "100%",
     padding: "12px 14px",
@@ -640,8 +646,16 @@ function StepInfo({ formData, updateField, errors, vehicles = [] }) {
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                 }}
-                value={formData.vehicleMakeModel}
-                onChange={(e) => updateField("vehicleMakeModel", e.target.value)}
+                value={isOtherVehicle ? OTHER_VEHICLE_VALUE : formData.vehicleMakeModel}
+                onChange={(e) => {
+                  if (e.target.value === OTHER_VEHICLE_VALUE) {
+                    setIsOtherVehicle(true);
+                    updateField("vehicleMakeModel", "");
+                  } else {
+                    setIsOtherVehicle(false);
+                    updateField("vehicleMakeModel", e.target.value);
+                  }
+                }}
                 onFocus={(e) => {
                   e.target.style.borderColor = "#00bfff";
                 }}
@@ -657,12 +671,16 @@ function StepInfo({ formData, updateField, errors, vehicles = [] }) {
                     {v.name}
                   </option>
                 ))}
-
+                <option value={OTHER_VEHICLE_VALUE}>Other</option>
               </select>
-            ) : (
+            ) : null}
+            {(vehicles.length === 0 || isOtherVehicle) && (
               <input
-                style={fieldStyle(errors.vehicleMakeModel)}
-                placeholder="e.g. Apollo Gen2"
+                style={{
+                  ...fieldStyle(errors.vehicleMakeModel),
+                  ...(isOtherVehicle ? { marginTop: 10 } : {}),
+                }}
+                placeholder={isOtherVehicle ? "Enter your vehicle make & model" : "e.g. Apollo Gen2"}
                 value={formData.vehicleMakeModel}
                 onChange={(e) => updateField("vehicleMakeModel", e.target.value)}
                 onFocus={(e) => {

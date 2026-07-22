@@ -69,6 +69,11 @@ function MiniCalendar({ selected, onSelect }) {
     return date < t;
   };
 
+  // SNH Golf Carts is closed on Tuesdays
+  const isClosedDay = (d) => new Date(year, month, d).getDay() === 2;
+
+  const isDisabled = (d) => isPast(d) || isClosedDay(d);
+
   const isSelected = (d) =>
     selected &&
     d &&
@@ -113,12 +118,12 @@ function MiniCalendar({ selected, onSelect }) {
           >
             {d ?
               <button
-                disabled={isPast(d)}
+                disabled={isDisabled(d)}
                 onClick={() => onSelect(new Date(year, month, d))}
                 className={`w-8 h-8 rounded-full text-xs font-medium transition-all
                   ${isSelected(d) ? "bg-accent text-white font-bold shadow-lg shadow-accent/30" : ""}
-                  ${!isSelected(d) && !isPast(d) ? "hover:bg-white/10 text-white/80" : ""}
-                  ${isPast(d) ? "text-white/20 cursor-not-allowed" : ""}
+                  ${!isSelected(d) && !isDisabled(d) ? "hover:bg-white/10 text-white/80" : ""}
+                  ${isDisabled(d) ? "text-white/20 cursor-not-allowed" : ""}
                 `}
               >
                 {d}

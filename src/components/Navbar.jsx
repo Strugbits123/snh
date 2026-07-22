@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Menu, X, Phone, ShoppingCart } from "lucide-react";
+import { Menu, X, Phone, ShoppingCart, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import FinancePopover from "./FinancePopover";
@@ -11,7 +11,15 @@ import FinancePopover from "./FinancePopover";
 const NAV_LINKS = [
   { label: "Home", path: "/" },
   { label: "Shop", path: "/shop" },
-  { label: "Services", path: "/services" },
+  {
+    label: "Services",
+    path: "/services",
+    children: [
+      { label: "Repair & Maintenance", path: "/services/repair" },
+      { label: "Winterization", path: "/services/winterization" },
+      { label: "Upgrades and Customization", path: "/services/upgrades" },
+    ],
+  },
   { label: "Rentals", path: "/rentals" },
   { label: "Blog", path: "/blogs" },
   { label: "About", path: "/about" },
@@ -21,6 +29,7 @@ const NAV_LINKS = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -29,8 +38,9 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => { 
+  useEffect(() => {
     setOpen(false);
+    setMobileServicesOpen(false);
   }, [pathname]);
 
   const isHome = pathname === "/";
@@ -52,18 +62,47 @@ export default function Navbar() {
           </Link>
 
           <div className="hidden lg:flex items-center gap-0.5 xl:gap-1">
-            {NAV_LINKS.map((link) => (
-              <Link key={link.path}
-                href={link.path}
-                className={`px-2 xl:px-4 py-2 text-[12px] xl:text-sm font-medium tracking-wide uppercase transition-colors rounded-lg whitespace-nowrap
-                  ${pathname === link.path || (link.path !== "/" && pathname.startsWith(link.path))
-                    ? "text-accent"
-                    : `${textColor} hover:text-accent`
-                  }`}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {NAV_LINKS.map((link) =>
+              link.children ? (
+                <div key={link.path} className="relative group">
+                  <button
+                    type="button"
+                    className={`flex items-center gap-1 px-2 xl:px-4 py-2 text-[12px] xl:text-sm font-medium tracking-wide uppercase transition-colors rounded-lg whitespace-nowrap
+                      ${pathname.startsWith(link.path)
+                        ? "text-accent"
+                        : `${textColor} group-hover:text-accent`
+                      }`}
+                  >
+                    {link.label}
+                    <ChevronDown className="w-3.5 h-3.5 transition-transform group-hover:rotate-180" />
+                  </button>
+                  <div className="absolute left-0 top-full pt-3 opacity-0 invisible -translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
+                    <div className="w-64 bg-white rounded-2xl shadow-xl border border-border overflow-hidden py-2">
+                      {link.children.map((child) => (
+                        <Link
+                          key={child.path}
+                          href={child.path}
+                          className="block px-5 py-3 text-sm font-medium uppercase tracking-wide text-foreground hover:bg-accent/5 hover:text-accent transition-colors"
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Link key={link.path}
+                  href={link.path}
+                  className={`px-2 xl:px-4 py-2 text-[12px] xl:text-sm font-medium tracking-wide uppercase transition-colors rounded-lg whitespace-nowrap
+                    ${pathname === link.path || (link.path !== "/" && pathname.startsWith(link.path))
+                      ? "text-accent"
+                      : `${textColor} hover:text-accent`
+                    }`}
+                >
+                  {link.label}
+                </Link>
+              )
+            )}
           </div>
 
           <div className="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0">
@@ -105,18 +144,64 @@ export default function Navbar() {
             className="lg:hidden bg-white border-t border-border overflow-hidden"
           >
             <div className="px-4 py-6 space-y-1">
-              {NAV_LINKS.map((link) => (
-                <Link key={link.path}
-                  href={link.path}
-                  className={`block px-4 py-3 text-base font-medium rounded-lg transition-colors
-                    ${pathname === link.path || (link.path !== "/" && pathname.startsWith(link.path))
-                      ? "text-accent bg-accent/5"
-                      : "text-foreground hover:bg-muted"
-                    }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
+              {NAV_LINKS.map((link) =>
+                link.children ? (
+                  <div key={link.path}>
+                    <button
+                      type="button"
+                      onClick={() => setMobileServicesOpen((v) => !v)}
+                      aria-expanded={mobileServicesOpen}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-base font-medium rounded-lg transition-colors
+                        ${pathname.startsWith(link.path)
+                          ? "text-accent bg-accent/5"
+                          : "text-foreground hover:bg-muted"
+                        }`}
+                    >
+                      {link.label}
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform ${mobileServicesOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    <AnimatePresence>
+                      {mobileServicesOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pl-4 py-1 space-y-1">
+                            {link.children.map((child) => (
+                              <Link
+                                key={child.path}
+                                href={child.path}
+                                className={`block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors
+                                  ${pathname === child.path
+                                    ? "text-accent bg-accent/5"
+                                    : "text-muted-foreground hover:bg-muted"
+                                  }`}
+                              >
+                                {child.label}
+                              </Link>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  <Link key={link.path}
+                    href={link.path}
+                    className={`block px-4 py-3 text-base font-medium rounded-lg transition-colors
+                      ${pathname === link.path || (link.path !== "/" && pathname.startsWith(link.path))
+                        ? "text-accent bg-accent/5"
+                        : "text-foreground hover:bg-muted"
+                      }`}
+                  >
+                    {link.label}
+                  </Link>
+                )
+              )}
               <div className="pt-4 border-t border-border mt-4 space-y-3">
                 <a
                   href="tel:6037777831"

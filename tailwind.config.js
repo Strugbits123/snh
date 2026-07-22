@@ -7,6 +7,7 @@ module.exports = {
       fontFamily: {
         sans: ['var(--font-sans)'],
         display: ['var(--font-display)', 'Montserrat', 'sans-serif'],
+        montserrat: ['Montserrat', 'sans-serif'],
       },
       borderRadius: {
         lg: 'var(--radius)',
