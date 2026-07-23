@@ -13,16 +13,19 @@ const SERVICES = [
     name: "New & Used Sales",
     icon: "ShoppingCart",
     desc: "Browse electric golf carts for sale from DACH, TEKO, Tomberlin, and Evolution Series. Affordable golf carts starting at $8K — used inventory available too.",
+    link: "/shop",
   },
   {
     name: "Repair & Maintenance",
     icon: "Wrench",
     desc: "Golf cart battery replacement, diagnostics, electrical repair, and general maintenance. Whatever the issue, your cart leaves running right.",
+    link: "/services/repair",
   },
   {
     name: "Rentals",
     icon: "CalendarDays",
     desc: "Rent a golf cart for a weekend, an event, or the full summer. Street-legal LSV rentals available — perfect for weddings, campgrounds, and lakeside cruising. Starting at $125/day.",
+    link: "/rentals",
   },
 ];
 
@@ -58,7 +61,7 @@ export default function ServicesOverview() {
                   {service.desc}
                 </p>
                 <Link
-                  href="/services"
+                  href={service.link}
                   aria-label={`Learn more about ${service.name}`}
                   className="flex items-center gap-1 text-sm font-medium text-accent group-hover:gap-2 transition-all"
                 >
@@ -70,7 +73,7 @@ export default function ServicesOverview() {
         </div>
 
         <div className="text-center mt-12">
-          <Link href="/services">
+          <Link href="/services/repair">
             <Button
               size="lg"
               className="bg-accent hover:bg-accent/90 text-white rounded-full px-8"

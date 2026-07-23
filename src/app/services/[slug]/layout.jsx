@@ -1,8 +1,31 @@
+// Page <title>/description are fixed per slug — not CMS-driven — so they stay
+// stable and unique for SEO/analytics regardless of what's in the Wix collection.
+const SEO = {
+  repair: {
+    title: "Golf Cart Repair Services | SNH Golf Carts LLC",
+    description:
+      "Professional golf cart repair and maintenance in Southern New Hampshire — diagnostics, battery replacement, and mobile service from SNH Golf Carts.",
+  },
+  winterization: {
+    title: "Golf Cart Winterization Services | SNH Golf Carts LLC",
+    description:
+      "Professional golf cart winterization services in Southern New Hampshire. Protect your investment before the cold sets in with SNH Golf Carts.",
+  },
+  upgrades: {
+    title: "Golf Cart Upgrades & Customization | SNH Golf Carts LLC",
+    description:
+      "Golf cart upgrades and customization in Southern New Hampshire — lithium conversions, lift kits, custom builds, and more from SNH Golf Carts.",
+  },
+};
+
 export async function generateMetadata({ params }) {
   const { slug } = await params;
+  const seo = SEO[slug];
+
   return {
-    title: "Golf Cart Services & Repair | SNH Golf Carts LLC",
+    title: seo?.title || "Golf Cart Services & Repair | SNH Golf Carts LLC",
     description:
+      seo?.description ||
       "Full-service golf cart care including repairs, battery replacement, custom upgrades, and winterization services in Southern NH.",
     alternates: {
       canonical: `/services/${slug}`,

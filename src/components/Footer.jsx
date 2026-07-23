@@ -15,17 +15,16 @@ const FOOTER_LINKS = [
   {
     title: "Services",
     links: [
-      { label: "Rentals", path: "/services#rentals" },
-      { label: "Repair & Maintenance", path: "/services#repair" },
-      { label: "Winterization", path: "/services#winterization" },
-      { label: "Custom Upgrades", path: "/services#upgrades" },
+      { label: "Rentals", path: "/rentals" },
+      { label: "Repair & Maintenance", path: "/services/repair" },
+      { label: "Winterization", path: "/services/winterization" },
+      { label: "Custom Upgrades", path: "/services/upgrades" },
     ],
   },
   {
     title: "Company",
     links: [
       { label: "About Us", path: "/about" },
-      { label: "Services", path: "/services" },
       { label: "Blog", path: "/blogs" },
       { label: "Contact", path: "/contact" },
     ],
