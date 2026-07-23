@@ -2,7 +2,10 @@ import { cache } from "react";
 import { wixClient } from "@/lib/wixClient";
 
 // Collection ID of the "Services" Wix Data collection (see wix-cms/services-import.csv).
-const COLLECTION_ID = process.env.WIX_SERVICES_COLLECTION_ID;
+// Falls back to the known-good collection ID if the env var isn't set on a
+// given deployment (e.g. a forgotten .env entry in production), so the
+// pages don't 404 just because the environment variable was missed.
+const COLLECTION_ID = process.env.WIX_SERVICES_COLLECTION_ID || "Import2";
 
 // Button labels stay hardcoded per slug — not editable from the CMS.
 const CTA_LABELS = {
