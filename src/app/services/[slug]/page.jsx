@@ -5,6 +5,7 @@ import { ArrowRight, Check } from "lucide-react";
 import CTASection from "@/components/CTASection";
 import { FadeInOnLoad, FadeInOnView } from "@/components/services/FadeIn";
 import UpgradeCheckoutCta from "@/components/services/UpgradeCheckoutCta";
+import ServiceQuoteForm from "@/components/services/ServiceQuoteForm";
 import { getServiceContent } from "@/lib/wixServices";
 
 const HERO_IMAGE = "/images/services/golf-card-services.webp";
@@ -222,6 +223,11 @@ export default async function ServiceDetail({ params }) {
           </div>
         </div>
       </section>
+
+      {/* On-page conversion path. Every other CTA on this page sends the
+          visitor to /contact, which costs a click on the most engaged traffic
+          on the site — this captures them where they already are. */}
+      <ServiceQuoteForm slug={slug} />
 
       <CTASection />
     </div>

@@ -64,6 +64,14 @@ export async function POST(req) {
 
     if (formName === "Contact Us Page") {
       formId = process.env.WIX_CONTACT_FORM_ID || formId;
+    } else if (formName === "Service Quote") {
+      // Dedicated Wix form for service quote requests when one exists; falls
+      // back to the general lead form so the service pages keep working until
+      // WIX_SERVICE_QUOTE_FORM_ID is set.
+      formId =
+        process.env.WIX_SERVICE_QUOTE_FORM_ID ||
+        process.env.WIX_LEAD_FORM_ID ||
+        formId;
     } else if (
       formName === "Sales Appointment" ||
       formName === "Service Request"
@@ -99,6 +107,10 @@ export async function POST(req) {
       cart_interest: metadata?.cart_interest,
       appointment_date: metadata?.appointment_date,
       budget_1: metadata?.budget_1,
+      // Service quote fields (ServiceQuoteForm on the /services/<slug> pages).
+      service_needed: metadata?.service_needed,
+      cart_model: metadata?.cart_model,
+      service_page: metadata?.service_page,
     };
 
     const { wixClient } = await import("@/lib/wixClient");
@@ -126,6 +138,12 @@ export async function POST(req) {
             submissionsMap[fid] = metadata?.budget_1;
           if (label.includes("interest"))
             submissionsMap[fid] = metadata?.cart_interest;
+          // Checked after "interest" so a "Cart Model" label wins over any
+          // looser match above it.
+          if (label.includes("model"))
+            submissionsMap[fid] = metadata?.cart_model;
+          if (label.includes("service"))
+            submissionsMap[fid] = metadata?.service_needed;
         });
       }
     } catch (discoveryErr) {
