@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,15 +13,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Phone, Send } from "lucide-react";
+import { extractProductDetails } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 
 const PHONE_DISPLAY = "603-777-7831";
 const PHONE_HREF = "tel:6037777831";
 
+// Sentinel so a product legitimately named "Other" could never collide with it.
+const OTHER_MODEL = "__other__";
+
 const SERVICE_OPTIONS = [
   "Repair & Maintenance",
   "Winterization",
-  "Upgrades & Customization",
-  "Other",
+  "Upgrades & Customization"
 ];
 
 // Preselect the service the visitor is already reading about, so the only
@@ -41,13 +45,50 @@ export default function ServiceQuoteForm({ slug }) {
     cart_model: "",
     service_needed: SERVICE_BY_SLUG[slug] || "",
   });
+  // Free-text model, shown only when "Other" is picked — mirrors how the
+  // waiver modal handles a vehicle that isn't in the catalog.
+  const [otherModel, setOtherModel] = useState("");
+  const [vehicles, setVehicles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // Same source and filtering as the waiver modal's vehicle dropdown, so the
+  // options stay in step with the live catalog instead of being hardcoded.
+  useEffect(() => {
+    let active = true;
+
+    fetch("/api/products")
+      .then((r) => r.json())
+      .then((res) => {
+        if (!active || !res.products) return;
+
+        const names = res.products
+          .map((p) => extractProductDetails(p, res.collections || []))
+          .filter(
+            (p) =>
+              !p.isAccessory &&
+              p.fullName?.toLowerCase() !== "speed upgrade service",
+          )
+          .map((p) => p.fullName)
+          .filter(Boolean);
+
+        setVehicles([...new Set(names)].sort((a, b) => a.localeCompare(b)));
+      })
+      .catch((err) => console.error("Error fetching vehicles:", err));
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: null }));
   };
+
+  // What actually gets submitted for cart_model.
+  const resolvedCartModel =
+    form.cart_model === OTHER_MODEL ? otherModel.trim() : form.cart_model;
 
   const validate = () => {
     const e = {};
@@ -84,14 +125,12 @@ export default function ServiceQuoteForm({ slug }) {
           email: form.email,
           phone: form.phone,
           formName: "Service Quote",
-          // The Wix lead form has a message field; compose one so the request
-          // is readable in the Wix inbox without opening every field.
-          message: `Service quote request from the ${slug} page.\nService needed: ${form.service_needed}\nCart model: ${form.cart_model || "Not provided"}`,
           metadata: {
             service_needed: form.service_needed,
-            cart_model: form.cart_model,
+            cart_model: resolvedCartModel,
+            // Not a form field — recorded on the Wix contact note so you can
+            // see which service page produced the lead.
             service_page: slug,
-            inquiry_type: "Quote",
           },
         }),
       });
@@ -99,11 +138,13 @@ export default function ServiceQuoteForm({ slug }) {
       const resData = await response.json();
       if (resData.success) {
         setErrors({});
-        // Same conversion signal the contact and lead forms send, then hand
-        // off to /thank-you so the redirect registers as a conversion.
-        if (typeof window !== "undefined" && typeof window.gtag === "function") {
-          window.gtag("event", "form_submit");
-        }
+        // form_submit keeps parity with the contact and lead forms; form_name
+        // is what lets you tell service quotes apart from them in GA4.
+        trackEvent("form_submit", {
+          form_name: "Service Quote",
+          service_needed: form.service_needed,
+          service_page: `/services/${slug}`,
+        });
         router.push("/thank-you");
       } else {
         alert("Something went wrong. Please try again.");
@@ -179,13 +220,31 @@ export default function ServiceQuoteForm({ slug }) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Cart Model</Label>
-                <Input
-                  placeholder="e.g. DACH Apollo Gen 2"
+                <Label>Cart Make / Model</Label>
+                <Select
                   value={form.cart_model}
-                  onChange={(e) => updateField("cart_model", e.target.value)}
-                  className="rounded-xl h-12"
-                />
+                  onValueChange={(v) => updateField("cart_model", v)}
+                >
+                  <SelectTrigger className="rounded-xl h-12">
+                    <SelectValue placeholder="Select Vehicle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicles.map((name) => (
+                      <SelectItem key={name} value={name}>
+                        {name}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value={OTHER_MODEL}>Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                {form.cart_model === OTHER_MODEL && (
+                  <Input
+                    placeholder="Enter your cart make & model"
+                    value={otherModel}
+                    onChange={(e) => setOtherModel(e.target.value)}
+                    className="rounded-xl h-12 mt-2"
+                  />
+                )}
               </div>
 
               <div className="space-y-2">
