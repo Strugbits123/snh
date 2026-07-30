@@ -52,7 +52,12 @@ function resolveWixLink(link) {
   // Wix reports target as BLANK / SELF / PARENT / TOP, but older content can
   // already hold an HTML value like "_blank".
   const rawTarget = link.target || "";
-  const newTab = rawTarget === "BLANK" || rawTarget === "_blank";
+  // A dialer or mail client opened in a new tab leaves an orphan blank tab —
+  // and on desktop, where no tel: handler exists, the blank tab is all you get.
+  // Editors tick "open in new tab" out of habit, so ignore it for these.
+  const isHandoffScheme = /^(tel:|mailto:)/i.test(href);
+  const newTab =
+    !isHandoffScheme && (rawTarget === "BLANK" || rawTarget === "_blank");
 
   // link.rel is an object of booleans on newer content, a string on older.
   let rel;
