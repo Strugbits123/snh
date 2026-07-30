@@ -5,6 +5,7 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import WaiverModal from "@/components/WaiverModal";
 import { wixProxy } from "@/lib/wixProxy";
 import { extractProductDetails } from "@/lib/utils";
+import { trackBeginCheckout } from "@/lib/ecommerce";
 
 // The "Speed Controller & Performance Upgrade" checkout entry point used on
 // every zig-zag item of the /services/upgrades page. Self-contained (state +
@@ -91,6 +92,16 @@ export default function UpgradeCheckoutCta() {
       }
 
       // 3. Initiate Checkout
+      // Last point we control before Wix hosted checkout takes over.
+      trackBeginCheckout(
+        {
+          id: speedProduct.id || speedProduct._id,
+          fullName: speedProduct.name,
+          category: "Service",
+          price: speedProduct.priceData?.price,
+        },
+        { quantity: 1 },
+      );
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { trackPurchaseOnce } from "@/lib/ecommerce";
 
 function OrderDetails() {
   const router = useRouter();
@@ -67,6 +68,21 @@ function OrderDetails() {
       router.replace("/");
     }
   }, [error, fallbackOrder, loading, router]);
+
+  // GA4 `purchase`. This is the only point in the flow we control: payment
+  // happens on Wix's hosted checkout, which then redirects back here, so this
+  // is where the completed order first becomes visible to our code.
+  // Deliberately keyed off `order` (the real order fetched from Wix) and not
+  // `fallbackOrder`, which is only cached display data from sessionStorage and
+  // carries no order ID or machine-readable total.
+  useEffect(() => {
+    if (!order) return;
+
+    const result = trackPurchaseOnce(order);
+    if (!result.sent && result.reason !== "already-tracked") {
+      console.warn("GA4 purchase not sent:", result.reason);
+    }
+  }, [order]);
 
   const hasOrderData = order || fallbackOrder;
 
