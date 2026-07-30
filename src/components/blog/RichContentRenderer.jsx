@@ -1,3 +1,94 @@
+import BlogRichButton from "./BlogRichButton";
+
+// Origins that count as "this site", so a Wix button pointing at an absolute
+// snhgolfcarts.com URL becomes an in-app route instead of a full page reload.
+const SITE_ORIGINS = [
+  process.env.NEXT_PUBLIC_SITE_URL,
+  "https://www.snhgolfcarts.com",
+  "https://snhgolfcarts.com",
+]
+  .filter(Boolean)
+  .map((value) => {
+    try {
+      return new URL(value).origin;
+    } catch {
+      return null;
+    }
+  })
+  .filter(Boolean);
+
+// Turn a Ricos linkData/link object into { href, internal, target, rel }.
+// Returns null when there is nothing to link to.
+function resolveWixLink(link) {
+  if (!link) return null;
+
+  // In-page anchor rather than a URL.
+  if (!link.url && link.anchor) {
+    return { href: `#${link.anchor}`, internal: false };
+  }
+
+  const raw = (link.url || "").trim();
+  if (!raw) return null;
+
+  let href = raw;
+  let internal = false;
+
+  if (raw.startsWith("/")) {
+    internal = true;
+  } else if (/^(tel:|mailto:|#)/i.test(raw)) {
+    internal = false;
+  } else {
+    try {
+      const parsed = new URL(raw);
+      if (SITE_ORIGINS.includes(parsed.origin)) {
+        internal = true;
+        href = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+    } catch {
+      // Not a parseable absolute URL — leave it exactly as the author wrote it.
+    }
+  }
+
+  // Wix reports target as BLANK / SELF / PARENT / TOP, but older content can
+  // already hold an HTML value like "_blank".
+  const rawTarget = link.target || "";
+  const newTab = rawTarget === "BLANK" || rawTarget === "_blank";
+
+  // link.rel is an object of booleans on newer content, a string on older.
+  let rel;
+  if (typeof link.rel === "string") {
+    rel = link.rel;
+  } else if (link.rel && typeof link.rel === "object") {
+    rel =
+      Object.entries(link.rel)
+        .filter(([, enabled]) => enabled)
+        .map(([key]) => key.toLowerCase())
+        .join(" ") || undefined;
+  }
+
+  if (newTab) {
+    rel = [rel, "noopener", "noreferrer"]
+      .filter(Boolean)
+      .join(" ")
+      .split(/\s+/)
+      .filter((token, i, all) => all.indexOf(token) === i)
+      .join(" ");
+  }
+
+  return {
+    href,
+    internal,
+    target: newTab ? "_blank" : undefined,
+    rel,
+  };
+}
+
+const BUTTON_ALIGNMENT = {
+  LEFT: "justify-start",
+  CENTER: "justify-center",
+  RIGHT: "justify-end",
+};
+
 function wixImageUrl(src) {
   if (!src) return null;
   if (typeof src === "string") {
@@ -50,7 +141,7 @@ function renderInlineNodes(nodes) {
   });
 }
 
-function RenderNode({ node, idx }) {
+function RenderNode({ node, idx, postSlug }) {
   if (!node) return null;
 
   switch (node.type) {
@@ -138,7 +229,7 @@ function RenderNode({ node, idx }) {
           className="border-l-4 border-accent/50 pl-5 my-5 italic text-muted-foreground"
         >
           {(node.nodes || []).map((child, i) => (
-            <RenderNode key={i} node={child} idx={i} />
+            <RenderNode key={i} node={child} idx={i} postSlug={postSlug} />
           ))}
         </blockquote>
       );
@@ -146,6 +237,41 @@ function RenderNode({ node, idx }) {
 
     case "DIVIDER": {
       return <hr key={idx} className="my-6 border-border" />;
+    }
+
+    // A button placed in the Wix blog editor. Styled to the site rather than to
+    // buttonData.styles, the same way headings and tables above ignore Wix's
+    // own styling and use ours.
+    case "BUTTON": {
+      const data = node.buttonData || {};
+      const text = (data.text || "").trim();
+      const resolved = resolveWixLink(data.link);
+
+      // An ACTION button, or a LINK button whose URL was never filled in, has
+      // nowhere to go — rendering a dead button is worse than rendering none.
+      if (!text || !resolved) {
+        console.warn(
+          `RichContentRenderer: skipping BUTTON node ${node.id || idx} — ` +
+            `${!text ? "no text" : "no link URL set in Wix"}.`,
+        );
+        return null;
+      }
+
+      const align =
+        BUTTON_ALIGNMENT[data.containerData?.alignment] || "justify-start";
+
+      return (
+        <div key={idx} className={`my-8 flex ${align}`}>
+          <BlogRichButton
+            text={text}
+            href={resolved.href}
+            internal={resolved.internal}
+            target={resolved.target}
+            rel={resolved.rel}
+            postSlug={postSlug}
+          />
+        </div>
+      );
     }
 
     case "CODE_BLOCK": {
@@ -169,7 +295,7 @@ function RenderNode({ node, idx }) {
           <table className="w-full border-collapse text-sm">
             <tbody className="divide-y divide-border">
               {(node.nodes || []).map((row, i) => (
-                <RenderNode key={i} node={row} idx={i} />
+                <RenderNode key={i} node={row} idx={i} postSlug={postSlug} />
               ))}
             </tbody>
           </table>
@@ -181,7 +307,7 @@ function RenderNode({ node, idx }) {
       return (
         <tr key={idx} className="divide-x divide-border">
           {(node.nodes || []).map((cell, i) => (
-            <RenderNode key={i} node={cell} idx={i} />
+            <RenderNode key={i} node={cell} idx={i} postSlug={postSlug} />
           ))}
         </tr>
       );
@@ -191,7 +317,7 @@ function RenderNode({ node, idx }) {
       return (
         <td key={idx} className="p-4 align-top">
           {(node.nodes || []).map((child, i) => (
-            <RenderNode key={i} node={child} idx={i} />
+            <RenderNode key={i} node={child} idx={i} postSlug={postSlug} />
           ))}
         </td>
       );
@@ -213,13 +339,13 @@ function RenderListItem({ node }) {
   );
 }
 
-export default function RichContentRenderer({ richContent }) {
+export default function RichContentRenderer({ richContent, postSlug }) {
   if (!richContent?.nodes || richContent.nodes.length === 0) return null;
 
   return (
     <div className="rich-content">
       {richContent.nodes.map((node, i) => (
-        <RenderNode key={node.id || i} node={node} idx={i} />
+        <RenderNode key={node.id || i} node={node} idx={i} postSlug={postSlug} />
       ))}
     </div>
   );

@@ -25,6 +25,7 @@ import { motion } from "framer-motion";
 import ProductCard from "@/components/ProductCard";
 import { extractProductDetails, cn } from "@/lib/utils";
 import FinancingBadge from "@/components/FinancingBadge";
+import { trackViewItem, trackBeginCheckout } from "@/lib/ecommerce";
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -54,6 +55,8 @@ export default function ProductDetail() {
         if (rawProduct) {
           const product = extractProductDetails(rawProduct, collections);
           setCart(product);
+          // GA4 view_item — the top of the ecommerce funnel.
+          trackViewItem(product);
           if (product.colors?.length > 0) {
             setSelectedOptions({
               [product.colorOptionName]: product.colors[0],
@@ -88,6 +91,8 @@ export default function ProductDetail() {
 
   const handleCardCheckout = async () => {
     setCheckoutLoading(true);
+    // Last point we control before the Wix hosted checkout takes over.
+    trackBeginCheckout(cart, { quantity: 1 });
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",

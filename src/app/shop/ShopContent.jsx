@@ -6,6 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import SectionHeading from "@/components/SectionHeading";
 import ShopFilterBar from "@/components/ShopFilterBar";
 import { extractProductDetails } from "@/lib/utils";
+import { trackViewItemList } from "@/lib/ecommerce";
 
 function ShopBody() {
   const searchParams = useSearchParams();
@@ -104,6 +105,16 @@ function ShopBody() {
 
     return seatMatch && makeMatch && colorMatch;
   });
+
+  // GA4 view_item_list — reports the grid on first load and again whenever a
+  // filter changes which products are actually on screen. Keyed on the id list
+  // rather than `filtered` itself, which is a fresh array every render.
+  const filteredIds = filtered.map((p) => p.id).join(",");
+  useEffect(() => {
+    if (!filteredIds) return;
+    trackViewItemList(filtered, `Shop - ${categoryFilter}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredIds, categoryFilter]);
 
   const handleCategoryChange = (cat) => {
     setCategoryFilter(cat);

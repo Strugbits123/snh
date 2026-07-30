@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter, Playfair_Display } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -6,6 +7,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ChatWidget from "@/components/ChatWidget";
 import ScrollToTop from "@/components/ScrollToTop";
+import Analytics from "@/components/Analytics";
+import { GA_MEASUREMENT_ID } from "@/lib/analytics";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -91,18 +94,19 @@ export default function RootLayout({
         className="min-h-full flex flex-col font-sans bg-background text-foreground overflow-x-hidden"
         suppressHydrationWarning
       >
+        {/* The gtag loader only fetches the library. Configuration and every
+            event live in <Analytics /> so there is no ordering dependency
+            between this script and hydration — gtag.js drains whatever the
+            component has already queued on window.dataLayer. */}
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-C3CZL24B69"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
           strategy="afterInteractive"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-C3CZL24B69');
-          `}
-        </Script>
+        {/* Suspense boundary: <Analytics /> reads useSearchParams, which would
+            otherwise opt every prerendered page out of static rendering. */}
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
         <ScrollToTop />
         <Navbar />
         <main className="flex-1">{children}</main>

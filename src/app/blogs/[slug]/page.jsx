@@ -77,7 +77,10 @@ export default async function BlogDetail({ params }) {
 
           {/* Article Content — rich content preferred, plain text as fallback */}
           {post.richContent ?
-            <RichContentRenderer richContent={post.richContent} />
+            <RichContentRenderer
+              richContent={post.richContent}
+              postSlug={slug}
+            />
           : <div className="space-y-5">
               {(post.contentText || "")
                 .split(/\n{2,}/)

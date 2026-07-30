@@ -60,10 +60,27 @@ export async function POST(req) {
       );
     }
 
+    // The service-page quote form targets its own Wix form ("Service Category
+    // Page Form") and must never be routed anywhere else — no fallback to the
+    // lead form and no placeholder ID. If the env var is missing we fail loudly
+    // rather than silently filing the lead in the wrong place.
+    const isServiceQuote = formName === "Service Quote";
+
     let formId = process.env.WIX_FORM_ID;
 
     if (formName === "Contact Us Page") {
       formId = process.env.WIX_CONTACT_FORM_ID || formId;
+    } else if (isServiceQuote) {
+      formId = process.env.WIX_SERVICE_QUOTE_FORM_ID;
+      if (!formId) {
+        console.error(
+          "Service quote submission rejected: WIX_SERVICE_QUOTE_FORM_ID is not set.",
+        );
+        return NextResponse.json(
+          { error: "Server configuration error" },
+          { status: 500 },
+        );
+      }
     } else if (
       formName === "Sales Appointment" ||
       formName === "Service Request"
@@ -72,9 +89,10 @@ export async function POST(req) {
     }
 
     if (
-      !formId ||
-      formId === "your-lead-form-id-here" ||
-      formId === "your-contact-form-id-here"
+      !isServiceQuote &&
+      (!formId ||
+        formId === "your-lead-form-id-here" ||
+        formId === "your-contact-form-id-here")
     ) {
       formId = "00000000-0000-0000-0000-000000000000";
     }
@@ -89,22 +107,36 @@ export async function POST(req) {
       return p.startsWith("+") ? p : `+${cleaned}`;
     };
 
-    const submissionsMap = {
-      inquiry_type: metadata?.inquiry_type,
-      name: name,
-      email: email,
-      message: message,
-      phone: formatPhone(phone),
-      appointment_time: metadata?.appointment_time,
-      cart_interest: metadata?.cart_interest,
-      appointment_date: metadata?.appointment_date,
-      budget_1: metadata?.budget_1,
-    };
+    // Keyed by the real field targets on the Wix form, so the submission maps
+    // straight onto the form's own fields.
+    const submissionsMap =
+      isServiceQuote ?
+        {
+          full_name: name,
+          email: email,
+          phone: formatPhone(phone),
+          cart_model: metadata?.cart_model,
+          service_needed: metadata?.service_needed,
+        }
+      : {
+          inquiry_type: metadata?.inquiry_type,
+          name: name,
+          email: email,
+          message: message,
+          phone: formatPhone(phone),
+          appointment_time: metadata?.appointment_time,
+          cart_interest: metadata?.cart_interest,
+          appointment_date: metadata?.appointment_date,
+          budget_1: metadata?.budget_1,
+        };
 
     const { wixClient } = await import("@/lib/wixClient");
 
     try {
-      const form = await wixClient.submissions.getForm(formId);
+      // Skipped for service quotes — those keys are already the form's real
+      // field targets and must not be overwritten by label guessing.
+      const form =
+        isServiceQuote ? null : await wixClient.submissions.getForm(formId);
 
       if (form && form.fields) {
         form.fields.forEach((field) => {
@@ -126,6 +158,12 @@ export async function POST(req) {
             submissionsMap[fid] = metadata?.budget_1;
           if (label.includes("interest"))
             submissionsMap[fid] = metadata?.cart_interest;
+          // Checked after "interest" so a "Cart Model" label wins over any
+          // looser match above it.
+          if (label.includes("model"))
+            submissionsMap[fid] = metadata?.cart_model;
+          if (label.includes("service"))
+            submissionsMap[fid] = metadata?.service_needed;
         });
       }
     } catch (discoveryErr) {
@@ -136,7 +174,12 @@ export async function POST(req) {
     }
 
     try {
-      const collectionsRes = await wixClient.items.listDataCollections();
+      // Service quotes live in their own Wix form's submissions, not the
+      // sales-lead data collection.
+      const collectionsRes =
+        isServiceQuote ?
+          { collections: [] }
+        : await wixClient.items.listDataCollections();
       const collections = collectionsRes.collections || [];
 
       const targetColl = collections.find((c) => {
@@ -188,7 +231,12 @@ export async function POST(req) {
           Object.entries(submissionsMap)
             .filter(([k, v]) => v && !k.startsWith("0000"))
             .map(([k, v]) => `${k}: ${v}`)
-            .join("\n");
+            .join("\n") +
+          // The service quote form has no message field, so record which
+          // service page produced the lead here instead.
+          (isServiceQuote && metadata?.service_page ?
+            `\nsource_page: /services/${metadata.service_page}`
+          : "");
 
         await wixClient.contacts.createNote(contactId, {
           content: noteContent,
