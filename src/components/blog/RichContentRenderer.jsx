@@ -252,14 +252,22 @@ function RenderNode({ node, idx, postSlug }) {
       const text = (data.text || "").trim();
       const resolved = resolveWixLink(data.link);
 
-      // An ACTION button, or a LINK button whose URL was never filled in, has
-      // nowhere to go — rendering a dead button is worse than rendering none.
-      if (!text || !resolved) {
+      // Every button the author places is rendered, linked or not. A button
+      // with no URL yet still shows up so it's visible in the article rather
+      // than silently disappearing — it just isn't clickable until a link is
+      // set in Wix. Only a button with no label at all has nothing to draw.
+      if (!text) {
         console.warn(
-          `RichContentRenderer: skipping BUTTON node ${node.id || idx} — ` +
-            `${!text ? "no text" : "no link URL set in Wix"}.`,
+          `RichContentRenderer: skipping BUTTON node ${node.id || idx} — no text.`,
         );
         return null;
+      }
+
+      if (!resolved) {
+        console.warn(
+          `RichContentRenderer: BUTTON node ${node.id || idx} ("${text}") has ` +
+            `no link URL set in Wix — rendering it unlinked.`,
+        );
       }
 
       const align =
@@ -269,10 +277,10 @@ function RenderNode({ node, idx, postSlug }) {
         <div key={idx} className={`my-8 flex ${align}`}>
           <BlogRichButton
             text={text}
-            href={resolved.href}
-            internal={resolved.internal}
-            target={resolved.target}
-            rel={resolved.rel}
+            href={resolved?.href}
+            internal={resolved?.internal}
+            target={resolved?.target}
+            rel={resolved?.rel}
             postSlug={postSlug}
           />
         </div>

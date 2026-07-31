@@ -18,7 +18,8 @@ export default function BlogRichButton({
 }) {
   // tel: and mailto: already have dedicated events from the delegated listener
   // in <Analytics />; firing cta_click too would double-count the same action.
-  const isContactLink = href.startsWith("tel:") || href.startsWith("mailto:");
+  const isContactLink =
+    !!href && (href.startsWith("tel:") || href.startsWith("mailto:"));
 
   const handleClick = () => {
     if (isContactLink) return;
@@ -32,6 +33,17 @@ export default function BlogRichButton({
 
   const className =
     "rounded-full bg-accent hover:bg-accent/90 text-white px-8 h-12 text-base";
+
+  // No URL set in Wix yet: render the button so the author can see it in the
+  // article, but there's nowhere to send anyone, so it isn't a link and nothing
+  // is tracked.
+  if (!href) {
+    return (
+      <Button type="button" className={className}>
+        {text}
+      </Button>
+    );
+  }
 
   // next/link only helps for in-app routes; anything else stays a plain anchor.
   if (internal) {
