@@ -124,7 +124,7 @@ export default async function ServiceDetail({ params }) {
                       </div>
                     )}
                     <div className="flex flex-col items-start gap-4">
-                      {slug === "upgrades" && <UpgradeCheckoutCta />}
+                      {/* {slug === "upgrades" && <UpgradeCheckoutCta />} */}
                       {slug === "upgrades" ? (
                         <Link href="/contact" className="w-full sm:w-auto">
                           <Button
