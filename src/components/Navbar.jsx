@@ -17,7 +17,6 @@ const NAV_LINKS = [
     children: [
       { label: "Repair & Maintenance", path: "/services/repair" },
       { label: "Winterization", path: "/services/winterization" },
-      { label: "Upgrades and Customization", path: "/services/upgrades" },
     ],
   },
   { label: "Rentals", path: "/rentals" },

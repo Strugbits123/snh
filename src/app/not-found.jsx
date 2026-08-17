@@ -14,7 +14,6 @@ export const metadata = {
 const serviceLinks = [
   { href: "/services/repair", label: "Repair & Maintenance" },
   { href: "/services/winterization", label: "Winterization" },
-  { href: "/services/upgrades", label: "Upgrades and Customization" },
 ];
 
 const cardClass =

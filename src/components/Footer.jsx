@@ -18,7 +18,6 @@ const FOOTER_LINKS = [
       { label: "Rentals", path: "/rentals" },
       { label: "Repair & Maintenance", path: "/services/repair" },
       { label: "Winterization", path: "/services/winterization" },
-      { label: "Custom Upgrades", path: "/services/upgrades" },
     ],
   },
   {

@@ -128,11 +128,6 @@ const staticRedirects: Redirect[] = [
     destination: "/rentals",
     permanent: true,
   },
-  {
-    source: "/booking-calendar/upgrades",
-    destination: "/services/upgrades",
-    permanent: true,
-  },
   { source: "/book-online", destination: "/contact", permanent: true },
   // Any other old booking-calendar URL: booking now happens via the contact form.
   {
@@ -140,14 +135,20 @@ const staticRedirects: Redirect[] = [
     destination: "/contact",
     permanent: true,
   },
-  // `/service-page/<slug>` was Wix's service detail route. The three slugs we
-  // still publish map straight across; anything else goes to the contact form.
+  // `/service-page/<slug>` was Wix's service detail route. The slugs we still
+  // publish map straight across; anything else goes to the contact form.
   {
-    source: "/service-page/:slug(repair|winterization|upgrades)",
+    source: "/service-page/:slug(repair|winterization)",
     destination: "/services/:slug",
     permanent: true,
   },
   { source: "/service-page/:path*", destination: "/contact", permanent: true },
+
+  // --- Retired service page ------------------------------------------------
+  // The upgrades page has been pulled. Every nav, footer and 404 link to it is
+  // gone, so this only catches indexed URLs and old bookmarks. Sits above the
+  // dead-slug rules below because redirects are matched in order.
+  { source: "/services/upgrades", destination: "/", permanent: true },
 
   // --- Dead service slugs --------------------------------------------------
   // Before commit 24452e4 the /services/[slug] page fell back to the repair
